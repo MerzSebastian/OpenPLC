@@ -8,7 +8,6 @@ import ReactFlow, {
   useEdgesState,
   Handle,
   Position,
-  Edge,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 
@@ -241,8 +240,8 @@ export default function App() {
   const [selectedBoard, setSelectedBoard] = useState('arduino_nano');
 
   const onConnect = useCallback(
-    (params: any) => setEdges((eds) => addEdge({ ...params, data: { negated: false } }, eds)),
-    []
+    (params: any) => setEdges((eds) => addEdge({ ...params }, eds)),
+    [setEdges]
   );
 
   const onDragStart = (event: any, nodeType: string) => {
