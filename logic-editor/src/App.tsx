@@ -12,6 +12,7 @@ import ReactFlow, {
 import 'reactflow/dist/style.css';
 
 import { downloadJson, uploadJson } from './utils';
+import { bytecodeToString, generateBytecode } from './bytecode-gen';
 
 let id = 0;
 const getId = () => `dndnode_${id++}`;
@@ -297,6 +298,11 @@ export default function App() {
       }
     });
   };
+  const uploadBytecode = () => {
+    const config = { nodes, edges, board: selectedBoard };
+    const bytecode = generateBytecode(config as any);
+    console.log(bytecodeToString(bytecode));
+  }
 
   return (
     <div style={{ display: 'flex', height: '100vh' }}>
@@ -355,10 +361,13 @@ export default function App() {
 
         {/* New buttons */}
         <button onClick={handleDownload} style={{ marginTop: 8, width: '100%' }}>
-          Download JSON
+          Download Project
         </button>
         <button onClick={handleUpload} style={{ marginTop: 4, width: '100%' }}>
-          Upload JSON
+          Load Project
+        </button>
+        <button onClick={uploadBytecode} style={{ marginTop: 4, width: '100%' }}>
+          Flash
         </button>
       </div>
 
