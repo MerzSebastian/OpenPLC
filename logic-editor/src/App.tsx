@@ -19,8 +19,8 @@ const getId = () => `dndnode_${id++}`;
 // === Node Definitions ===
 function InputNode({ data }: any) {
   const pins = [
-    ...((boards as any)[data.board]?.digital || []),
-    ...((boards as any)[data.board]?.analog || []),
+    ...((boards as any)[data.selectedBoard]?.digital || []),
+    ...((boards as any)[data.selectedBoard]?.analog || []),
   ];
 
   return (
@@ -45,8 +45,8 @@ function InputNode({ data }: any) {
 
 function OutputNode({ data }: any) {
   const pins = [
-    ...((boards as any)[data.board]?.digital || []),
-    ...((boards as any)[data.board]?.analog || []),
+    ...((boards as any)[data.selectedBoard]?.digital || []),
+    ...((boards as any)[data.selectedBoard]?.analog || []),
   ];
 
   return (
@@ -263,7 +263,6 @@ export default function App() {
       data: {
         label: type,
         inputs: 2,
-        board: selectedBoard,
         onChangePin: (val: string) => {
           setNodes((nds) =>
             nds.map((n) =>
@@ -273,6 +272,7 @@ export default function App() {
         },
       },
     };
+
 
     setNodes((nds) => nds.concat(newNode));
   };
@@ -284,7 +284,7 @@ export default function App() {
 
   // ======= New Save / Load Functions using utils =======
   const handleDownload = () => {
-    downloadJson({ nodes, edges }, 'my-logic-project');
+    downloadJson({ nodes, edges, board: selectedBoard }, 'my-logic-project');
   };
 
   const handleUpload = () => {
@@ -364,7 +364,7 @@ export default function App() {
 
       <div style={{ flex: 1 }}>
         <ReactFlow
-          nodes={nodes}
+          nodes={nodes.map(n => ({ ...n, data: { ...n.data, selectedBoard } }))}
           edges={edges}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
