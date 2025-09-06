@@ -8,8 +8,11 @@ import ReactFlow, {
   useEdgesState,
   Handle,
   Position,
+  Edge,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
+
+import { downloadJson, uploadJson } from './utils';
 
 let id = 0;
 const getId = () => `dndnode_${id++}`;
@@ -187,6 +190,9 @@ function NotNode() {
   );
 }
 
+
+
+// Node types
 const nodeTypes = {
   inputNode: InputNode,
   outputNode: OutputNode,
@@ -195,6 +201,7 @@ const nodeTypes = {
   notNode: NotNode,
 };
 
+// Board config (same as before)
 const boards = {
   arduino_nano: {
     name: 'Arduino Nano 328P',
@@ -225,14 +232,13 @@ const boards = {
       { pin: 'A7', label: 'A7' },
     ],
   },
-  // Add other boards here
 };
-
 
 export default function App() {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [rfInstance, setRfInstance] = useState<any>(null);
+  const [selectedBoard, setSelectedBoard] = useState('arduino_nano');
 
   const onConnect = useCallback(
     (params: any) => setEdges((eds) => addEdge({ ...params, data: { negated: false } }, eds)),
@@ -258,7 +264,7 @@ export default function App() {
       data: {
         label: type,
         inputs: 2,
-        board: selectedBoard, // 👈 only store the selected board
+        board: selectedBoard,
         onChangePin: (val: string) => {
           setNodes((nds) =>
             nds.map((n) =>
@@ -269,8 +275,6 @@ export default function App() {
       },
     };
 
-
-
     setNodes((nds) => nds.concat(newNode));
   };
 
@@ -279,33 +283,31 @@ export default function App() {
     event.dataTransfer.dropEffect = 'move';
   };
 
-  const saveFlow = () => {
-    if (rfInstance) {
-      const flow = rfInstance.toObject();
-      localStorage.setItem('logic-flow', JSON.stringify(flow));
-      alert('Saved to localStorage');
-    }
+  // ======= New Save / Load Functions using utils =======
+  const handleDownload = () => {
+    downloadJson({ nodes, edges }, 'my-logic-project');
   };
 
-  const loadFlow = () => {
-    const flow = localStorage.getItem('logic-flow');
-    if (flow) {
-      const obj = JSON.parse(flow);
-      setNodes(obj.nodes || []);
-      setEdges(obj.edges || []);
-    }
+  const handleUpload = () => {
+    uploadJson((data) => {
+      if (data.nodes && data.edges) {
+        setNodes(data.nodes);
+        setEdges(data.edges);
+      } else {
+        alert('Invalid project file');
+      }
+    });
   };
-  const [selectedBoard, setSelectedBoard] = useState("arduino_nano");
+
   return (
     <div style={{ display: 'flex', height: '100vh' }}>
       <div style={{ width: 200, backgroundColor: '#e5e7eb', padding: 8 }}>
-        
-<div style={{ marginBottom: 12 }}>
+        <div style={{ marginBottom: 12 }}>
           <label>Board: </label>
           <select
             value={selectedBoard}
             onChange={(e) => setSelectedBoard(e.target.value)}
-            style={{ width: "100%" }}
+            style={{ width: '100%' }}
           >
             {Object.keys(boards).map((key) => (
               <option key={key} value={key}>
@@ -314,15 +316,53 @@ export default function App() {
             ))}
           </select>
         </div>
+
         <h3>Blocks</h3>
-        <div onDragStart={(e) => onDragStart(e, 'inputNode')} draggable style={{ padding: 4, margin: 2, backgroundColor: '#22c55e', cursor: 'move' }}>INPUT</div>
-        <div onDragStart={(e) => onDragStart(e, 'outputNode')} draggable style={{ padding: 4, margin: 2, backgroundColor: '#ef4444', cursor: 'move' }}>OUTPUT</div>
-        <div onDragStart={(e) => onDragStart(e, 'andNode')} draggable style={{ padding: 4, margin: 2, backgroundColor: '#3b82f6', cursor: 'move' }}>AND</div>
-        <div onDragStart={(e) => onDragStart(e, 'orNode')} draggable style={{ padding: 4, margin: 2, backgroundColor: '#a855f7', cursor: 'move' }}>OR</div>
-        <div onDragStart={(e) => onDragStart(e, 'notNode')} draggable style={{ padding: 4, margin: 2, backgroundColor: '#facc15', cursor: 'move' }}>NOT</div>
-        <button onClick={saveFlow} style={{ marginTop: 8, width: '100%' }}>Save</button>
-        <button onClick={loadFlow} style={{ marginTop: 4, width: '100%' }}>Load</button>
+        <div
+          onDragStart={(e) => onDragStart(e, 'inputNode')}
+          draggable
+          style={{ padding: 4, margin: 2, backgroundColor: '#22c55e', cursor: 'move' }}
+        >
+          INPUT
+        </div>
+        <div
+          onDragStart={(e) => onDragStart(e, 'outputNode')}
+          draggable
+          style={{ padding: 4, margin: 2, backgroundColor: '#ef4444', cursor: 'move' }}
+        >
+          OUTPUT
+        </div>
+        <div
+          onDragStart={(e) => onDragStart(e, 'andNode')}
+          draggable
+          style={{ padding: 4, margin: 2, backgroundColor: '#3b82f6', cursor: 'move' }}
+        >
+          AND
+        </div>
+        <div
+          onDragStart={(e) => onDragStart(e, 'orNode')}
+          draggable
+          style={{ padding: 4, margin: 2, backgroundColor: '#a855f7', cursor: 'move' }}
+        >
+          OR
+        </div>
+        <div
+          onDragStart={(e) => onDragStart(e, 'notNode')}
+          draggable
+          style={{ padding: 4, margin: 2, backgroundColor: '#facc15', cursor: 'move' }}
+        >
+          NOT
+        </div>
+
+        {/* New buttons */}
+        <button onClick={handleDownload} style={{ marginTop: 8, width: '100%' }}>
+          Download JSON
+        </button>
+        <button onClick={handleUpload} style={{ marginTop: 4, width: '100%' }}>
+          Upload JSON
+        </button>
       </div>
+
       <div style={{ flex: 1 }}>
         <ReactFlow
           nodes={nodes}
