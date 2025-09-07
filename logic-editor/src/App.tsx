@@ -30,7 +30,7 @@ const resetIdCounter = (nodes: any[]) => {
     }
     return max;
   }, -1);
-  
+
   nodeIdCounter = maxId + 1;
 };
 
@@ -323,7 +323,7 @@ export default function App() {
       if (data.nodes && data.edges) {
         // Reset ID counter based on loaded nodes
         resetIdCounter(data.nodes);
-        
+
         // Add event handlers to all nodes when loading
         const updatedNodes = data.nodes.map((node: any) => ({
           ...node,
@@ -334,7 +334,7 @@ export default function App() {
             onChangeInputs: handleInputsChange,
           },
         }));
-        
+
         setNodes(updatedNodes);
         setEdges(data.edges);
         if (data.board) setSelectedBoard(data.board);
@@ -418,14 +418,14 @@ export default function App() {
 
       <div style={{ flex: 1 }}>
         <ReactFlow
-          nodes={nodes.map(n => ({ 
-            ...n, 
-            data: { 
-              ...n.data, 
+          nodes={nodes.map(n => ({
+            ...n,
+            data: {
+              ...n.data,
               selectedBoard,
               onChangePin: handlePinChange,
               onChangeInputs: n.type === 'andNode' || n.type === 'orNode' ? handleInputsChange : undefined
-            } 
+            }
           }))}
           edges={edges}
           onNodesChange={onNodesChange}
