@@ -34,36 +34,27 @@ const resetIdCounter = (nodes: any[]) => {
   nodeIdCounter = maxId + 1;
 };
 
+// Common style classes
+const nodeBaseClasses = "flex flex-col items-center text-white font-bold relative rounded-md p-1";
+const handleClasses = "bg-black";
+const titleClasses = "text-center mb-1";
+const inputClasses = "w-full bg-white/20 rounded px-1 text-black text-xs";
+
 // === Node Definitions ===
 function LatchNode({ data, id }: any) {
   return (
-    <div
-      style={{
-        width: 120,
-        height: 100,
-        backgroundColor: '#f97316',
-        border: '2px solid #9a3412',
-        borderRadius: 6,
-        padding: 4,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        color: 'white',
-        fontWeight: 'bold',
-        position: 'relative',
-      }}
-    >
-      <div>LATCH</div>
-      <Handle type="target" position={Position.Left} id="set" style={{ top: '30%', background: '#000' }} />
-      <Handle type="target" position={Position.Left} id="reset" style={{ top: '70%', background: '#000' }} />
-      <Handle type="source" position={Position.Right} id="out" style={{ background: '#000' }} />
+    <div className={`${nodeBaseClasses} w-30 h-25 bg-orange-500 border-2 border-orange-800`}>
+      <div className={titleClasses}>LATCH</div>
+      <Handle type="target" position={Position.Left} id="set" className={handleClasses} style={{ top: '30%' }} />
+      <Handle type="target" position={Position.Left} id="reset" className={handleClasses} style={{ top: '70%' }} />
+      <Handle type="source" position={Position.Right} id="out" className={handleClasses} />
       
-      <div style={{ marginTop: 4, fontSize: '12px' }}>
+      <div className="mt-1 text-xs">
         Initial:
         <select
           value={data.initialState || 0}
           onChange={(e) => data.onChangeInitialState(id, parseInt(e.target.value))}
-          style={{ width: 50, marginLeft: 4 }}
+          className={`${inputClasses} ml-1 w-12`}
         >
           <option value={0}>LOW</option>
           <option value={1}>HIGH</option>
@@ -75,44 +66,29 @@ function LatchNode({ data, id }: any) {
 
 function TimerNode({ data, id }: any) {
   return (
-    <div
-      style={{
-        width: 150,
-        height: 120,
-        backgroundColor: '#06b6d4',
-        border: '2px solid #0e7490',
-        borderRadius: 6,
-        padding: 4,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        color: 'white',
-        fontWeight: 'bold',
-        position: 'relative',
-      }}
-    >
-      <div>TIMER</div>
-      <Handle type="source" position={Position.Right} id="out" style={{ background: '#000' }} />
+    <div className={`${nodeBaseClasses} w-36 h-30 bg-cyan-500 border-2 border-cyan-800`}>
+      <div className={titleClasses}>TIMER</div>
+      <Handle type="source" position={Position.Right} id="out" className={handleClasses} />
       
-      <div style={{ marginTop: 4, fontSize: '12px' }}>
-        <div>
+      <div className="mt-1 text-xs space-y-1">
+        <div className="flex items-center">
           Pulse (ms):
           <input
             type="number"
             min="1"
             value={data.pulseLength || 1000}
             onChange={(e) => data.onChangePulseLength(id, parseInt(e.target.value))}
-            style={{ width: 60, marginLeft: 4 }}
+            className={`${inputClasses} ml-1 w-14`}
           />
         </div>
-        <div>
+        <div className="flex items-center">
           Interval (ms):
           <input
             type="number"
             min="1"
             value={data.interval || 5000}
             onChange={(e) => data.onChangeInterval(id, parseInt(e.target.value))}
-            style={{ width: 60, marginLeft: 4 }}
+            className={`${inputClasses} ml-1 w-14`}
           />
         </div>
       </div>
@@ -127,12 +103,12 @@ function InputNode({ data, id }: any) {
   ];
 
   return (
-    <div style={{ width: 120, backgroundColor: '#22c55e', border: '2px solid #166534', borderRadius: 6, padding: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', color: 'white', fontWeight: 'bold', position: 'relative' }}>
-      <div>INPUT</div>
+    <div className={`${nodeBaseClasses} w-30 bg-green-500 border-2 border-green-700`}>
+      <div className={titleClasses}>INPUT</div>
       <select
         value={data.pin || ''}
         onChange={(e) => data.onChangePin(id, e.target.value)}
-        style={{ width: '100%', marginTop: 4 }}
+        className={`${inputClasses} mt-1`}
       >
         <option value="">Select Pin</option>
         {pins.map((p: any) => (
@@ -141,7 +117,7 @@ function InputNode({ data, id }: any) {
           </option>
         ))}
       </select>
-      <Handle type="source" position={Position.Right} id="out" style={{ background: '#000' }} />
+      <Handle type="source" position={Position.Right} id="out" className={handleClasses} />
     </div>
   );
 }
@@ -153,12 +129,12 @@ function OutputNode({ data, id }: any) {
   ];
 
   return (
-    <div style={{ width: 120, backgroundColor: '#ef4444', border: '2px solid #991b1b', borderRadius: 6, padding: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', color: 'white', fontWeight: 'bold', position: 'relative' }}>
-      <div>OUTPUT</div>
+    <div className={`${nodeBaseClasses} w-30 bg-red-500 border-2 border-red-700`}>
+      <div className={titleClasses}>OUTPUT</div>
       <select
         value={data.pin || ''}
         onChange={(e) => data.onChangePin(id, e.target.value)}
-        style={{ width: '100%', marginTop: 4 }}
+        className={`${inputClasses} mt-1`}
       >
         <option value="">Select Pin</option>
         {pins.map((p: any) => (
@@ -167,46 +143,35 @@ function OutputNode({ data, id }: any) {
           </option>
         ))}
       </select>
-      <Handle type="target" position={Position.Left} id="in" style={{ background: '#000' }} />
+      <Handle type="target" position={Position.Left} id="in" className={handleClasses} />
     </div>
   );
 }
 
 function AndNode({ data, id }: any) {
   const { inputs = 2 } = data;
-  const handleSpacing = 13;
+  const handleSpacing = 15;
   const baseHeight = 50;
   const dynamicHeight = baseHeight + (inputs - 3) * handleSpacing;
 
   return (
     <div
-      style={{
-        width: 100,
-        minHeight: dynamicHeight,
-        backgroundColor: '#3b82f6',
-        border: '2px solid #1e40af',
-        borderRadius: 6,
-        padding: 4,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        color: 'white',
-        fontWeight: 'bold',
-        position: 'relative',
-      }}
+      className={`${nodeBaseClasses} bg-blue-500 border-2 border-blue-700`}
+      style={{ width: 100, minHeight: dynamicHeight }}
     >
-      <div>AND</div>
+      <div className={titleClasses}>AND</div>
       {Array.from({ length: inputs }).map((_, idx) => (
         <Handle
           key={idx}
           type="target"
           position={Position.Left}
           id={`in${idx}`}
-          style={{ top: 10 + idx * 15, background: '#000' }}
+          className={handleClasses}
+          style={{ top: 10 + idx * 15 }}
         />
       ))}
-      <Handle type="source" position={Position.Right} id="out" style={{ background: '#000' }} />
-      <div style={{ marginTop: 4 }}>
+      <Handle type="source" position={Position.Right} id="out" className={handleClasses} />
+      <div className="mt-1 text-xs">
         Inputs:
         <input
           type="number"
@@ -214,7 +179,7 @@ function AndNode({ data, id }: any) {
           max={8}
           value={inputs}
           onChange={(e) => data.onChangeInputs(id, parseInt(e.target.value))}
-          style={{ width: 30, marginLeft: 4 }}
+          className={`${inputClasses} ml-1 w-8`}
         />
       </div>
     </div>
@@ -224,34 +189,20 @@ function AndNode({ data, id }: any) {
 function OrNode({ data, id }: any) {
   const { inputs = 2 } = data;
   return (
-    <div
-      style={{
-        width: 100,
-        minHeight: 50,
-        backgroundColor: '#a855f7',
-        border: '2px solid #6b21a8',
-        borderRadius: 6,
-        padding: 4,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        color: 'white',
-        fontWeight: 'bold',
-        position: 'relative',
-      }}
-    >
-      <div>OR</div>
+    <div className={`${nodeBaseClasses} w-25 min-h-12 bg-purple-500 border-2 border-purple-700`}>
+      <div className={titleClasses}>OR</div>
       {Array.from({ length: inputs }).map((_, idx) => (
         <Handle
           key={idx}
           type="target"
           position={Position.Left}
           id={`in${idx}`}
-          style={{ top: 10 + idx * 15, background: '#000' }}
+          className={handleClasses}
+          style={{ top: 10 + idx * 15 }}
         />
       ))}
-      <Handle type="source" position={Position.Right} id="out" style={{ background: '#000' }} />
-      <div style={{ marginTop: 4 }}>
+      <Handle type="source" position={Position.Right} id="out" className={handleClasses} />
+      <div className="mt-1 text-xs">
         Inputs:
         <input
           type="number"
@@ -259,7 +210,7 @@ function OrNode({ data, id }: any) {
           max={8}
           value={inputs}
           onChange={(e) => data.onChangeInputs(id, parseInt(e.target.value))}
-          style={{ width: 30, marginLeft: 4 }}
+          className={`${inputClasses} ml-1 w-8`}
         />
       </div>
     </div>
@@ -268,24 +219,10 @@ function OrNode({ data, id }: any) {
 
 function NotNode({ data, id }: any) {
   return (
-    <div
-      style={{
-        width: 80,
-        height: 50,
-        backgroundColor: '#facc15',
-        border: '2px solid #ca8a04',
-        borderRadius: 6,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: 'white',
-        fontWeight: 'bold',
-        position: 'relative',
-      }}
-    >
-      NOT
-      <Handle type="target" position={Position.Left} id="in" style={{ background: '#000' }} />
-      <Handle type="source" position={Position.Right} id="out" style={{ background: '#000' }} />
+    <div className={`${nodeBaseClasses} w-20 h-12 bg-yellow-500 border-2 border-yellow-700 justify-center`}>
+      <div className={titleClasses}>NOT</div>
+      <Handle type="target" position={Position.Left} id="in" className={handleClasses} />
+      <Handle type="source" position={Position.Right} id="out" className={handleClasses} />
     </div>
   );
 }
@@ -376,11 +313,26 @@ export default function App() {
   // Event handler for changing number of inputs
   const handleInputsChange = useCallback((nodeId: string, inputsValue: number) => {
     setNodes((nds) =>
-      nds.map((n) =>
-        n.id === nodeId ? { ...n, data: { ...n.data, inputs: inputsValue } } : n
-      )
+      nds.map((n) => {
+        if (n.id === nodeId) {
+          // Remove edges connected to handles that will no longer exist
+          const oldInputs = n.data.inputs || 2;
+          if (inputsValue < oldInputs) {
+            setEdges((eds) => 
+              eds.filter(edge => 
+                !(edge.target === nodeId && 
+                  edge.targetHandle && 
+                  parseInt(edge.targetHandle.replace('in', '')) >= inputsValue)
+              )
+            );
+          }
+          
+          return { ...n, data: { ...n.data, inputs: inputsValue } };
+        }
+        return n;
+      })
     );
-  }, [setNodes]);
+  }, [setNodes, setEdges]);
 
   const onConnect = useCallback(
     (params: any) => setEdges((eds) => addEdge({ ...params }, eds)),
@@ -462,14 +414,14 @@ export default function App() {
   }
 
   return (
-    <div style={{ display: 'flex', height: '100vh' }}>
-      <div style={{ width: 200, backgroundColor: '#e5e7eb', padding: 8 }}>
-        <div style={{ marginBottom: 12 }}>
+    <div className="flex h-screen">
+      <div className="w-50 bg-gray-200 p-2">
+        <div className="mb-3">
           <label>Board: </label>
           <select
             value={selectedBoard}
             onChange={(e) => setSelectedBoard(e.target.value)}
-            style={{ width: '100%' }}
+            className="w-full"
           >
             {Object.keys(boards).map((key) => (
               <option key={key} value={key}>
@@ -479,69 +431,69 @@ export default function App() {
           </select>
         </div>
 
-        <h3>Blocks</h3>
+        <h3 className="font-bold">Blocks</h3>
         <div
           onDragStart={(e) => onDragStart(e, 'inputNode')}
           draggable
-          style={{ padding: 4, margin: 2, backgroundColor: '#22c55e', cursor: 'move' }}
+          className="p-1 m-0.5 bg-green-500 cursor-move"
         >
           INPUT
         </div>
         <div
           onDragStart={(e) => onDragStart(e, 'outputNode')}
           draggable
-          style={{ padding: 4, margin: 2, backgroundColor: '#ef4444', cursor: 'move' }}
+          className="p-1 m-0.5 bg-red-500 cursor-move"
         >
           OUTPUT
         </div>
         <div
           onDragStart={(e) => onDragStart(e, 'andNode')}
           draggable
-          style={{ padding: 4, margin: 2, backgroundColor: '#3b82f6', cursor: 'move' }}
+          className="p-1 m-0.5 bg-blue-500 cursor-move"
         >
           AND
         </div>
         <div
           onDragStart={(e) => onDragStart(e, 'orNode')}
           draggable
-          style={{ padding: 4, margin: 2, backgroundColor: '#a855f7', cursor: 'move' }}
+          className="p-1 m-0.5 bg-purple-500 cursor-move"
         >
           OR
         </div>
         <div
           onDragStart={(e) => onDragStart(e, 'notNode')}
           draggable
-          style={{ padding: 4, margin: 2, backgroundColor: '#facc15', cursor: 'move' }}
+          className="p-1 m-0.5 bg-yellow-500 cursor-move"
         >
           NOT
         </div>
         <div
           onDragStart={(e) => onDragStart(e, 'latchNode')}
           draggable
-          style={{ padding: 4, margin: 2, backgroundColor: '#f97316', cursor: 'move' }}
+          className="p-1 m-0.5 bg-orange-500 cursor-move"
         >
           LATCH
         </div>
         <div
           onDragStart={(e) => onDragStart(e, 'timerNode')}
           draggable
-          style={{ padding: 4, margin: 2, backgroundColor: '#06b6d4', cursor: 'move' }}
+          className="p-1 m-0.5 bg-cyan-500 cursor-move"
         >
           TIMER
         </div>
 
-        <button onClick={handleDownload} style={{ marginTop: 8, width: '100%' }}>
+        <button onClick={handleDownload} className="mt-2 w-full bg-blue-500 text-white p-1 rounded">
           Download Project
         </button>
-        <button onClick={handleUpload} style={{ marginTop: 4, width: '100%' }}>
+        <button onClick={handleUpload} className="mt-1 w-full bg-gray-500 text-white p-1 rounded">
           Load Project
         </button>
-        <button onClick={uploadBytecode} style={{ marginTop: 4, width: '100%' }}>
+        <button onClick={uploadBytecode} className="mt-1 w-full bg-green-600 text-white p-1 rounded">
           Flash
         </button>
       </div>
 
-      <div style={{ flex: 1 }}>
+      <div className="flex-1">
         <ReactFlow
           nodes={nodes.map(n => ({
             ...n,
