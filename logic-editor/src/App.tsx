@@ -10,7 +10,6 @@ import ReactFlow, {
   Position,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-
 import { downloadJson, uploadJson } from './utils';
 import { bytecodeToString, generateBytecode } from './bytecode-gen';
 
