@@ -269,7 +269,11 @@ export default function App() {
     const type = event.dataTransfer.getData('application/reactflow');
     if (!type || !rfInstance) return;
 
-    const position = rfInstance.project({ x: event.clientX - 200, y: event.clientY - 40 });
+    // Replace deprecated project() with screenToFlowPosition()
+    const position = rfInstance.screenToFlowPosition({
+      x: event.clientX,
+      y: event.clientY,
+    });
 
     const newNode = {
       id: getId(),
