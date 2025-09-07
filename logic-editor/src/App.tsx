@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import ReactFlow, {
   addEdge,
   MiniMap,
@@ -14,8 +14,25 @@ import 'reactflow/dist/style.css';
 import { downloadJson, uploadJson } from './utils';
 import { bytecodeToString, generateBytecode } from './bytecode-gen';
 
-let id = 0;
-const getId = () => `dndnode_${id++}`;
+// Improved ID management
+let nodeIdCounter = 0;
+
+const getNextId = () => {
+  return `dndnode_${nodeIdCounter++}`;
+};
+
+const resetIdCounter = (nodes: any[]) => {
+  const maxId = nodes.reduce((max, node) => {
+    const match = node.id.match(/dndnode_(\d+)/);
+    if (match) {
+      const idNum = parseInt(match[1], 10);
+      return Math.max(max, idNum);
+    }
+    return max;
+  }, -1);
+  
+  nodeIdCounter = maxId + 1;
+};
 
 // === Node Definitions ===
 function InputNode({ data, id }: any) {
@@ -188,15 +205,6 @@ function NotNode({ data, id }: any) {
   );
 }
 
-// Node types
-const nodeTypes = {
-  inputNode: InputNode,
-  outputNode: OutputNode,
-  andNode: AndNode,
-  orNode: OrNode,
-  notNode: NotNode,
-};
-
 // Board config
 const boards = {
   arduino_nano: {
@@ -236,6 +244,15 @@ export default function App() {
   const [rfInstance, setRfInstance] = useState<any>(null);
   const [selectedBoard, setSelectedBoard] = useState('arduino_nano');
 
+  // Memoize nodeTypes to prevent recreation on each render
+  const nodeTypes = useMemo(() => ({
+    inputNode: InputNode,
+    outputNode: OutputNode,
+    andNode: AndNode,
+    orNode: OrNode,
+    notNode: NotNode,
+  }), []);
+
   // Event handler for changing pin
   const handlePinChange = useCallback((nodeId: string, pinValue: string) => {
     setNodes((nds) =>
@@ -269,14 +286,14 @@ export default function App() {
     const type = event.dataTransfer.getData('application/reactflow');
     if (!type || !rfInstance) return;
 
-    // Replace deprecated project() with screenToFlowPosition()
+    // Use screenToFlowPosition instead of deprecated project()
     const position = rfInstance.screenToFlowPosition({
       x: event.clientX,
       y: event.clientY,
     });
 
     const newNode = {
-      id: getId(),
+      id: getNextId(),
       type,
       position,
       data: {
@@ -304,6 +321,9 @@ export default function App() {
   const handleUpload = () => {
     uploadJson((data) => {
       if (data.nodes && data.edges) {
+        // Reset ID counter based on loaded nodes
+        resetIdCounter(data.nodes);
+        
         // Add event handlers to all nodes when loading
         const updatedNodes = data.nodes.map((node: any) => ({
           ...node,
