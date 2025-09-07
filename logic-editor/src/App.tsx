@@ -77,12 +77,12 @@ function LatchNode({ data, id }: any) {
 
 function TimerNode({ data, id }: any) {
   return (
-    <div className={`${nodeBaseClasses} w-36 h-30 bg-cyan-500 border-2 border-cyan-800`}>
+    <div className={`${nodeBaseClasses} w-44 h-30 bg-cyan-500 border-2 border-cyan-800`}>
       <div className={titleClasses}>TIMER</div>
       <Handle type="source" position={Position.Right} id="out" className={handleClasses} />
       
       <div className="mt-1 text-xs space-y-1">
-        <div className="flex items-center">
+        <div className="flex items-center whitespace-nowrap">
           Pulse (ms):
           <input
             type="number"
@@ -92,7 +92,7 @@ function TimerNode({ data, id }: any) {
             className={`${inputClasses} ml-1 w-14`}
           />
         </div>
-        <div className="flex items-center">
+        <div className="flex items-center whitespace-nowrap">
           Interval (ms):
           <input
             type="number"
@@ -182,7 +182,7 @@ function AndNode({ data, id }: any) {
         />
       ))}
       <Handle type="source" position={Position.Right} id="out" className={handleClasses} />
-      <div className="mt-1 text-xs">
+      <div className="mt-1 text-xs flex">
         Inputs:
         <input
           type="number"
@@ -190,7 +190,7 @@ function AndNode({ data, id }: any) {
           max={8}
           value={inputs}
           onChange={(e) => data.onChangeInputs(id, parseInt(e.target.value))}
-          className={`${inputClasses} ml-1 w-8`}
+          className={`${inputClasses} w-8 ml-2`}
         />
       </div>
     </div>
