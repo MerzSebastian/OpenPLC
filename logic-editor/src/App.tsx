@@ -78,17 +78,17 @@ function LatchNode({ data, id }: any) {
 
 function ToggleNode({ data, id }: any) {
   return (
-    <div className={`${nodeBaseClasses} w-30 h-20 bg-pink-500 border-2 border-pink-800`}>
+    <div className={`${nodeBaseClasses} w-30 h-15 bg-pink-500 border-2 border-pink-800`}>
       <div className={titleClasses}>TOGGLE</div>
       <Handle type="target" position={Position.Left} id="in" className={handleClasses} />
       <Handle type="source" position={Position.Right} id="out" className={handleClasses} />
 
-      <div className="mt-1 text-xs">
+      <div className="mt-1 text-xs flex">
         Initial:
         <select
           value={data.initialState || 0}
           onChange={(e) => data.onChangeInitialState(id, parseInt(e.target.value))}
-          className={`${inputClasses} ml-1 w-12`}
+          className={`${inputClasses} ml-2 w-12`}
         >
           <option value={0}>LOW</option>
           <option value={1}>HIGH</option>
@@ -500,7 +500,7 @@ export default function App() {
               selectedBoard,
               onChangePin: handlePinChange,
               onChangeInputs: n.type === 'andNode' || n.type === 'orNode' ? handleInputsChange : undefined,
-              onChangeInitialState: n.type === 'latchNode' ? handleInitialStateChange : undefined,
+              onChangeInitialState: n.type === 'latchNode' || n.type === 'toggleNode' ? handleInitialStateChange : undefined,
               onChangePulseLength: n.type === 'pulseNode' ? handlePulseLengthChange : undefined,
               onChangeInterval: n.type === 'pulseNode' ? handleIntervalChange : undefined,
             }
