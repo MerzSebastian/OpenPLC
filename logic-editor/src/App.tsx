@@ -47,7 +47,8 @@ const blockTypes = [
   { type: 'orNode', label: 'OR', color: 'bg-purple-500' },
   { type: 'notNode', label: 'NOT', color: 'bg-yellow-500' },
   { type: 'latchNode', label: 'LATCH', color: 'bg-orange-500' },
-  { type: 'pulseNode', label: 'PULSE', color: 'bg-cyan-500' },
+  { type: 'pulseNode', label: 'PULSE (beta)', color: 'bg-cyan-500' },
+  { type: 'toggleNode', label: 'TOGGLE', color: 'bg-pink-500' },
 ];
 
 // === Node Definitions ===
@@ -75,12 +76,34 @@ function LatchNode({ data, id }: any) {
   );
 }
 
+function ToggleNode({ data, id }: any) {
+  return (
+    <div className={`${nodeBaseClasses} w-30 h-20 bg-pink-500 border-2 border-pink-800`}>
+      <div className={titleClasses}>TOGGLE</div>
+      <Handle type="target" position={Position.Left} id="in" className={handleClasses} />
+      <Handle type="source" position={Position.Right} id="out" className={handleClasses} />
+
+      <div className="mt-1 text-xs">
+        Initial:
+        <select
+          value={data.initialState || 0}
+          onChange={(e) => data.onChangeInitialState(id, parseInt(e.target.value))}
+          className={`${inputClasses} ml-1 w-12`}
+        >
+          <option value={0}>LOW</option>
+          <option value={1}>HIGH</option>
+        </select>
+      </div>
+    </div>
+  );
+}
+
 function PulseNode({ data, id }: any) {
   return (
     <div className={`${nodeBaseClasses} w-44 h-30 bg-cyan-500 border-2 border-cyan-800`}>
       <div className={titleClasses}>PULSE</div>
       <Handle type="source" position={Position.Right} id="out" className={handleClasses} />
-      
+
       <div className="mt-1 text-xs space-y-1">
         <div className="flex items-center whitespace-nowrap">
           Pulse (ms):
@@ -286,6 +309,7 @@ export default function App() {
     notNode: NotNode,
     latchNode: LatchNode,
     pulseNode: PulseNode,
+    toggleNode: ToggleNode,
   }), []);
 
   const handleInitialStateChange = useCallback((nodeId: string, initialState: number) => {
@@ -329,15 +353,15 @@ export default function App() {
           // Remove edges connected to handles that will no longer exist
           const oldInputs = n.data.inputs || 2;
           if (inputsValue < oldInputs) {
-            setEdges((eds) => 
-              eds.filter(edge => 
-                !(edge.target === nodeId && 
-                  edge.targetHandle && 
+            setEdges((eds) =>
+              eds.filter(edge =>
+                !(edge.target === nodeId &&
+                  edge.targetHandle &&
                   parseInt(edge.targetHandle.replace('in', '')) >= inputsValue)
               )
             );
           }
-          
+
           return { ...n, data: { ...n.data, inputs: inputsValue } };
         }
         return n;
@@ -443,7 +467,7 @@ export default function App() {
         </div>
 
         <h3 className="font-bold">Blocks</h3>
-        
+
         {/* Simplified block list using array map */}
         {blockTypes.map((block) => (
           <div

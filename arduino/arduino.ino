@@ -13,6 +13,7 @@
 #define OP_XOR 15
 #define OP_LATCH 16
 #define OP_PULSE 17
+#define OP_TOGGLE 18
 #define OP_DELAY 30
 
 const int MAX_INSTRUCTIONS = 100;
@@ -22,6 +23,12 @@ const int MAX_VARIABLES = 20;
 unsigned long previousMillis[MAX_VARIABLES] = {0};
 bool timerState[MAX_VARIABLES] = {false};
 
+
+// global variables for toggle states
+bool toggleState[MAX_VARIABLES] = {false};
+bool toggleInitialized[MAX_VARIABLES] = {false};
+bool prevInputState[MAX_VARIABLES] = {false};
+
 byte instructions[MAX_INSTRUCTIONS];
 int instructionLength = 0;
 int variables[MAX_VARIABLES];
@@ -30,7 +37,7 @@ void setup() {
   Serial.begin(9600);
   
   // Directly assign your bytecode to the instructions array
-  byte myBytecode[] = {1,3,1,4,1,2,2,5,1,6,3,3,0,3,4,1,3,2,2,3,6,3,16,1,3,4,0,11,3,2,0,4,5,4,5,5};
+  byte myBytecode[] = {1,3,1,4,1,2,2,5,1,6,3,3,0,3,4,1,3,2,2,3,6,3,17,4,100,0,232,3,18,2,5,0,16,1,3,6,0,11,4,0,6,4,5,7,4,5,7};
   
   // Copy the bytecode to the instructions array
   instructionLength = sizeof(myBytecode) / sizeof(myBytecode[0]);
@@ -205,6 +212,30 @@ void executeInstructions() {
         }
         
         variables[outputVar] = timerState[outputVar];
+        break;
+      }
+      case OP_TOGGLE: {
+        byte inputVar = instructions[pc++];
+        byte outputVar = instructions[pc++];
+        byte initialState = instructions[pc++];
+        
+        // Initialize on first run
+        if (!toggleInitialized[outputVar]) {
+          toggleState[outputVar] = initialState;
+          toggleInitialized[outputVar] = true;
+          prevInputState[outputVar] = variables[inputVar];
+        }
+        
+        // Detect rising edge (transition from LOW to HIGH)
+        if (variables[inputVar] && !prevInputState[outputVar]) {
+          toggleState[outputVar] = !toggleState[outputVar];
+        }
+        
+        // Store current input for next comparison
+        prevInputState[outputVar] = variables[inputVar];
+        
+        // Set output to current toggle state
+        variables[outputVar] = toggleState[outputVar];
         break;
       }
     }

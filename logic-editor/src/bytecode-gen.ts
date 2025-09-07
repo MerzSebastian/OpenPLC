@@ -13,6 +13,7 @@ export const OP_NOR = 14;
 export const OP_XOR = 15;
 export const OP_LATCH = 16;
 export const OP_PULSE = 17;
+export const OP_TOGGLE = 18;
 export const OP_DELAY = 30;
 
 // Types for the logic configuration
@@ -60,26 +61,26 @@ interface LogicConfig {
 export function generateBytecode(config: LogicConfig): number[] {
   const { nodes, edges } = config;
   const instructions: number[] = [];
-  
+
   // Build graph and in-degree map
   const graph: Record<string, string[]> = {};
   const inDegree: Record<string, number> = {};
   const nodeDict: Record<string, Node> = {};
-  
+
   for (const node of nodes) {
     const nodeId = node.id;
     graph[nodeId] = [];
     inDegree[nodeId] = 0;
     nodeDict[nodeId] = node;
   }
-  
+
   for (const edge of edges) {
     const source = edge.source;
     const target = edge.target;
     graph[source].push(target);
     inDegree[target] += 1;
   }
-  
+
   // Topological sort
   const queue: string[] = [];
   for (const [nodeId, deg] of Object.entries(inDegree)) {
@@ -87,7 +88,7 @@ export function generateBytecode(config: LogicConfig): number[] {
       queue.push(nodeId);
     }
   }
-  
+
   const topologicalOrder: string[] = [];
   while (queue.length > 0) {
     const nodeId = queue.shift() as string;
@@ -99,7 +100,7 @@ export function generateBytecode(config: LogicConfig): number[] {
       }
     }
   }
-  
+
   // Assign variable indices to non-output nodes
   const varIndexMap: Record<string, number> = {};
   let varCount = 0;
@@ -110,7 +111,7 @@ export function generateBytecode(config: LogicConfig): number[] {
       varCount += 1;
     }
   }
-  
+
   // Set pin modes for input and output nodes
   for (const node of nodes) {
     if (node.type === 'inputNode' && node.data.pin) {
@@ -123,11 +124,11 @@ export function generateBytecode(config: LogicConfig): number[] {
       instructions.push(pin);
     }
   }
-  
+
   // Generate instructions for each node in topological order
   for (const nodeId of topologicalOrder) {
     const node = nodeDict[nodeId];
-    
+
     if (node.type === 'inputNode' && node.data.pin) {
       const pin = parseInt(node.data.pin, 10);
       const varIndex = varIndexMap[nodeId];
@@ -143,12 +144,12 @@ export function generateBytecode(config: LogicConfig): number[] {
           break;
         }
       }
-      
+
       let sourceVar = 0; // Default to 0 if no source
       if (sourceNodeId && varIndexMap[sourceNodeId] !== undefined) {
         sourceVar = varIndexMap[sourceNodeId];
       }
-      
+
       const pin = parseInt(node.data.pin, 10);
       instructions.push(OP_WRITE_PIN);
       instructions.push(pin);
@@ -156,7 +157,7 @@ export function generateBytecode(config: LogicConfig): number[] {
     } else {
       // Logic gate node
       const gateType = node.type;
-      
+
       // Handle different node types
       switch (gateType) {
         case 'notNode': {
@@ -169,7 +170,7 @@ export function generateBytecode(config: LogicConfig): number[] {
               }
             }
           }
-          
+
           if (inputVars.length >= 1 && varIndexMap[nodeId] !== undefined) {
             instructions.push(OP_NOT);
             instructions.push(inputVars[0]);
@@ -187,7 +188,7 @@ export function generateBytecode(config: LogicConfig): number[] {
               }
             }
           }
-          
+
           if (inputVars.length >= 2 && varIndexMap[nodeId] !== undefined) {
             instructions.push(OP_AND);
             instructions.push(inputVars.length);
@@ -208,7 +209,7 @@ export function generateBytecode(config: LogicConfig): number[] {
               }
             }
           }
-          
+
           if (inputVars.length >= 2 && varIndexMap[nodeId] !== undefined) {
             instructions.push(OP_OR);
             instructions.push(inputVars.length);
@@ -223,7 +224,7 @@ export function generateBytecode(config: LogicConfig): number[] {
           // Find set and reset inputs
           let setVar = -1;
           let resetVar = -1;
-          
+
           for (const edge of edges) {
             if (edge.target === nodeId) {
               const sourceNodeId = edge.source;
@@ -236,11 +237,11 @@ export function generateBytecode(config: LogicConfig): number[] {
               }
             }
           }
-          
+
           if (setVar >= 0 && resetVar >= 0 && varIndexMap[nodeId] !== undefined) {
             const outputVar = varIndexMap[nodeId];
             const initialState = node.data.initialState || 0;
-            
+
             instructions.push(OP_LATCH);
             instructions.push(setVar);
             instructions.push(resetVar);
@@ -254,7 +255,7 @@ export function generateBytecode(config: LogicConfig): number[] {
             const outputVar = varIndexMap[nodeId];
             const pulseLength = node.data.pulseLength || 1000;
             const interval = node.data.interval || 5000;
-            
+
             instructions.push(OP_PULSE);
             instructions.push(outputVar);
             instructions.push(pulseLength & 0xFF);
@@ -264,10 +265,33 @@ export function generateBytecode(config: LogicConfig): number[] {
           }
           break;
         }
+        case 'toggleNode': {
+          const inputVars: number[] = [];
+
+          for (const edge of edges) {
+            if (edge.target === nodeId) {
+              const sourceNodeId = edge.source;
+              if (varIndexMap[sourceNodeId] !== undefined) {
+                inputVars.push(varIndexMap[sourceNodeId]);
+              }
+            }
+          }
+
+          if (inputVars.length >= 1 && varIndexMap[nodeId] !== undefined) {
+            const outputVar = varIndexMap[nodeId];
+            const initialState = node.data.initialState || 0;
+
+            instructions.push(OP_TOGGLE);
+            instructions.push(inputVars[0]); // Input variable
+            instructions.push(outputVar);    // Output variable
+            instructions.push(initialState); // Initial state
+          }
+          break;
+        }
       }
     }
   }
-  
+
   return instructions;
 }
 
