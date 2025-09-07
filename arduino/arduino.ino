@@ -1,5 +1,3 @@
-#include <EEPROM.h>
-
 // Simplified Opcodes
 #define OP_SET_PIN_MODE_INPUT 1
 #define OP_SET_PIN_MODE_OUTPUT 2
@@ -7,14 +5,12 @@
 #define OP_WRITE_PIN 4
 #define OP_READ_ANALOG_PIN 5
 #define OP_WRITE_ANALOG_PIN 6
-
 #define OP_NOT 10
 #define OP_AND 11
 #define OP_OR 12
 #define OP_NAND 13
 #define OP_NOR 14
 #define OP_XOR 15
-
 #define OP_DELAY 30
 
 const int MAX_INSTRUCTIONS = 100;
@@ -24,20 +20,21 @@ byte instructions[MAX_INSTRUCTIONS];
 int instructionLength = 0;
 int variables[MAX_VARIABLES];
 
-// Manual bytecode for testing (your example)
-byte manualBytecode[] = {1,2,2,4,1,3,3,2,0,3,3,2,11,2,2,3,4,4,3};
-
 void setup() {
   Serial.begin(9600);
   
-  // For Wokwi testing, use manual bytecode
-  setManualBytecode();
+  // Directly assign your bytecode to the instructions array
+  byte myBytecode[] = {1,3,1,4,1,2,2,5,3,3,0,3,4,1,3,2,2,11,3,2,0,1,3,4,5,3};
   
-  // For real use, comment the line above and uncomment below
-  // loadInstructionsFromEEPROM();
-  // if (instructionLength == 0) {
-  //   readInstructionsFromSerial();
-  // }
+  // Copy the bytecode to the instructions array
+  instructionLength = sizeof(myBytecode) / sizeof(myBytecode[0]);
+  for (int i = 0; i < instructionLength; i++) {
+    instructions[i] = myBytecode[i];
+  }
+  
+  Serial.print("Loaded ");
+  Serial.print(instructionLength);
+  Serial.println(" instructions");
 }
 
 void loop() {
@@ -45,31 +42,6 @@ void loop() {
     executeInstructions();
   }
   delay(10);
-}
-
-void setManualBytecode() {
-  instructionLength = sizeof(manualBytecode) / sizeof(manualBytecode[0]);
-  for (int i = 0; i < instructionLength; i++) {
-    instructions[i] = manualBytecode[i];
-  }
-  Serial.println("Manual bytecode loaded");
-}
-
-void readInstructionsFromSerial() {
-  Serial.println("Waiting for bytecode...");
-  while (Serial.available() == 0) {
-    delay(10);
-  }
-  
-  instructionLength = 0;
-  while (Serial.available() > 0 && instructionLength < MAX_INSTRUCTIONS) {
-    instructions[instructionLength] = Serial.read();
-    instructionLength++;
-    delay(5);
-  }
-  
-  saveInstructionsToEEPROM();
-  Serial.println("Bytecode received and saved");
 }
 
 void executeInstructions() {
@@ -119,38 +91,58 @@ void executeInstructions() {
         break;
       }
       case OP_AND: {
-        byte inputVar1 = instructions[pc++];
-        byte inputVar2 = instructions[pc++];
+        byte numInputs = instructions[pc++];
+        bool result = true;
+        for (byte i = 0; i < numInputs; i++) {
+          byte inputVar = instructions[pc++];
+          result = result && variables[inputVar];
+        }
         byte outputVar = instructions[pc++];
-        variables[outputVar] = variables[inputVar1] && variables[inputVar2];
+        variables[outputVar] = result;
         break;
       }
       case OP_OR: {
-        byte inputVar1 = instructions[pc++];
-        byte inputVar2 = instructions[pc++];
+        byte numInputs = instructions[pc++];
+        bool result = false;
+        for (byte i = 0; i < numInputs; i++) {
+          byte inputVar = instructions[pc++];
+          result = result || variables[inputVar];
+        }
         byte outputVar = instructions[pc++];
-        variables[outputVar] = variables[inputVar1] || variables[inputVar2];
+        variables[outputVar] = result;
         break;
       }
       case OP_NAND: {
-        byte inputVar1 = instructions[pc++];
-        byte inputVar2 = instructions[pc++];
+        byte numInputs = instructions[pc++];
+        bool result = true;
+        for (byte i = 0; i < numInputs; i++) {
+          byte inputVar = instructions[pc++];
+          result = result && variables[inputVar];
+        }
         byte outputVar = instructions[pc++];
-        variables[outputVar] = !(variables[inputVar1] && variables[inputVar2]);
+        variables[outputVar] = !result;
         break;
       }
       case OP_NOR: {
-        byte inputVar1 = instructions[pc++];
-        byte inputVar2 = instructions[pc++];
+        byte numInputs = instructions[pc++];
+        bool result = false;
+        for (byte i = 0; i < numInputs; i++) {
+          byte inputVar = instructions[pc++];
+          result = result || variables[inputVar];
+        }
         byte outputVar = instructions[pc++];
-        variables[outputVar] = !(variables[inputVar1] || variables[inputVar2]);
+        variables[outputVar] = !result;
         break;
       }
       case OP_XOR: {
-        byte inputVar1 = instructions[pc++];
-        byte inputVar2 = instructions[pc++];
+        byte numInputs = instructions[pc++];
+        bool result = false;
+        for (byte i = 0; i < numInputs; i++) {
+          byte inputVar = instructions[pc++];
+          result = result != variables[inputVar];
+        }
         byte outputVar = instructions[pc++];
-        variables[outputVar] = variables[inputVar1] != variables[inputVar2];
+        variables[outputVar] = result;
         break;
       }
       case OP_DELAY: {
@@ -159,23 +151,5 @@ void executeInstructions() {
         break;
       }
     }
-  }
-}
-
-void loadInstructionsFromEEPROM() {
-  instructionLength = EEPROM.read(0);
-  if (instructionLength > MAX_INSTRUCTIONS) {
-    instructionLength = 0;
-    return;
-  }
-  for (int i = 0; i < instructionLength; i++) {
-    instructions[i] = EEPROM.read(i + 1);
-  }
-}
-
-void saveInstructionsToEEPROM() {
-  EEPROM.write(0, instructionLength);
-  for (int i = 0; i < instructionLength; i++) {
-    EEPROM.write(i + 1, instructions[i]);
   }
 }

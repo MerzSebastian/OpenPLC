@@ -1,19 +1,4 @@
-// Simplified Opcodes
-export const OP_SET_PIN_MODE_INPUT = 1;
-export const OP_SET_PIN_MODE_OUTPUT = 2;
-export const OP_READ_PIN = 3;
-export const OP_WRITE_PIN = 4;
-export const OP_READ_ANALOG_PIN = 5;
-export const OP_WRITE_ANALOG_PIN = 6;
 
-export const OP_NOT = 10;
-export const OP_AND = 11;
-export const OP_OR = 12;
-export const OP_NAND = 13;
-export const OP_NOR = 14;
-export const OP_XOR = 15;
-
-export const OP_DELAY = 30;
 
 // Types for the logic configuration
 interface Position {
@@ -52,8 +37,22 @@ interface LogicConfig {
   edges: Edge[];
   board: string;
 }
+// Enhanced bytecode-gen.ts with dynamic input handling
+export const OP_SET_PIN_MODE_INPUT = 1;
+export const OP_SET_PIN_MODE_OUTPUT = 2;
+export const OP_READ_PIN = 3;
+export const OP_WRITE_PIN = 4;
+export const OP_READ_ANALOG_PIN = 5;
+export const OP_WRITE_ANALOG_PIN = 6;
+export const OP_NOT = 10;
+export const OP_AND = 11;
+export const OP_OR = 12;
+export const OP_NAND = 13;
+export const OP_NOR = 14;
+export const OP_XOR = 15;
+export const OP_DELAY = 30;
 
-// Function to generate bytecode from logic configuration
+// Function to generate bytecode with dynamic input handling
 export function generateBytecode(config: LogicConfig): number[] {
   const { nodes, edges } = config;
   const instructions: number[] = [];
@@ -168,6 +167,7 @@ export function generateBytecode(config: LogicConfig): number[] {
       
       const outputVar = varIndexMap[nodeId];
       
+      // Handle dynamic number of inputs
       switch (gateType) {
         case 'notNode':
           if (inputVars.length >= 1) {
@@ -179,40 +179,50 @@ export function generateBytecode(config: LogicConfig): number[] {
         case 'andNode':
           if (inputVars.length >= 2) {
             instructions.push(OP_AND);
-            instructions.push(inputVars[0]);
-            instructions.push(inputVars[1]);
+            instructions.push(inputVars.length); // Number of inputs
+            for (const inputVar of inputVars) {
+              instructions.push(inputVar);
+            }
             instructions.push(outputVar);
           }
           break;
         case 'orNode':
           if (inputVars.length >= 2) {
             instructions.push(OP_OR);
-            instructions.push(inputVars[0]);
-            instructions.push(inputVars[1]);
+            instructions.push(inputVars.length); // Number of inputs
+            for (const inputVar of inputVars) {
+              instructions.push(inputVar);
+            }
             instructions.push(outputVar);
           }
           break;
         case 'nandNode':
           if (inputVars.length >= 2) {
             instructions.push(OP_NAND);
-            instructions.push(inputVars[0]);
-            instructions.push(inputVars[1]);
+            instructions.push(inputVars.length); // Number of inputs
+            for (const inputVar of inputVars) {
+              instructions.push(inputVar);
+            }
             instructions.push(outputVar);
           }
           break;
         case 'norNode':
           if (inputVars.length >= 2) {
             instructions.push(OP_NOR);
-            instructions.push(inputVars[0]);
-            instructions.push(inputVars[1]);
+            instructions.push(inputVars.length); // Number of inputs
+            for (const inputVar of inputVars) {
+              instructions.push(inputVar);
+            }
             instructions.push(outputVar);
           }
           break;
         case 'xorNode':
           if (inputVars.length >= 2) {
             instructions.push(OP_XOR);
-            instructions.push(inputVars[0]);
-            instructions.push(inputVars[1]);
+            instructions.push(inputVars.length); // Number of inputs
+            for (const inputVar of inputVars) {
+              instructions.push(inputVar);
+            }
             instructions.push(outputVar);
           }
           break;
@@ -227,8 +237,3 @@ export function generateBytecode(config: LogicConfig): number[] {
 export function bytecodeToString(bytecode: number[]): string {
   return bytecode.join(',');
 }
-
-// Example usage
-// const config = { ... }; // Your logic configuration
-// const bytecode = generateBytecode(config);
-// console.log(bytecodeToString(bytecode));

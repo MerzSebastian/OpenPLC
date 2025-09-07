@@ -18,7 +18,7 @@ let id = 0;
 const getId = () => `dndnode_${id++}`;
 
 // === Node Definitions ===
-function InputNode({ data }: any) {
+function InputNode({ data, id }: any) {
   const pins = [
     ...((boards as any)[data.selectedBoard]?.digital || []),
     ...((boards as any)[data.selectedBoard]?.analog || []),
@@ -29,7 +29,7 @@ function InputNode({ data }: any) {
       <div>INPUT</div>
       <select
         value={data.pin || ''}
-        onChange={(e) => data.onChangePin?.(e.target.value)}
+        onChange={(e) => data.onChangePin(id, e.target.value)}
         style={{ width: '100%', marginTop: 4 }}
       >
         <option value="">Select Pin</option>
@@ -44,7 +44,7 @@ function InputNode({ data }: any) {
   );
 }
 
-function OutputNode({ data }: any) {
+function OutputNode({ data, id }: any) {
   const pins = [
     ...((boards as any)[data.selectedBoard]?.digital || []),
     ...((boards as any)[data.selectedBoard]?.analog || []),
@@ -55,7 +55,7 @@ function OutputNode({ data }: any) {
       <div>OUTPUT</div>
       <select
         value={data.pin || ''}
-        onChange={(e) => data.onChangePin?.(e.target.value)}
+        onChange={(e) => data.onChangePin(id, e.target.value)}
         style={{ width: '100%', marginTop: 4 }}
       >
         <option value="">Select Pin</option>
@@ -70,9 +70,7 @@ function OutputNode({ data }: any) {
   );
 }
 
-
-
-function AndNode({ data }: any) {
+function AndNode({ data, id }: any) {
   const { inputs = 2 } = data;
   const handleSpacing = 13;
   const baseHeight = 50;
@@ -113,7 +111,7 @@ function AndNode({ data }: any) {
           min={2}
           max={8}
           value={inputs}
-          onChange={(e) => data.onChangeInputs?.(parseInt(e.target.value))}
+          onChange={(e) => data.onChangeInputs(id, parseInt(e.target.value))}
           style={{ width: 30, marginLeft: 4 }}
         />
       </div>
@@ -121,7 +119,7 @@ function AndNode({ data }: any) {
   );
 }
 
-function OrNode({ data }: any) {
+function OrNode({ data, id }: any) {
   const { inputs = 2 } = data;
   return (
     <div
@@ -158,7 +156,7 @@ function OrNode({ data }: any) {
           min={2}
           max={8}
           value={inputs}
-          onChange={(e) => data.onChangeInputs?.(parseInt(e.target.value))}
+          onChange={(e) => data.onChangeInputs(id, parseInt(e.target.value))}
           style={{ width: 30, marginLeft: 4 }}
         />
       </div>
@@ -166,7 +164,7 @@ function OrNode({ data }: any) {
   );
 }
 
-function NotNode() {
+function NotNode({ data, id }: any) {
   return (
     <div
       style={{
@@ -190,8 +188,6 @@ function NotNode() {
   );
 }
 
-
-
 // Node types
 const nodeTypes = {
   inputNode: InputNode,
@@ -201,7 +197,7 @@ const nodeTypes = {
   notNode: NotNode,
 };
 
-// Board config (same as before)
+// Board config
 const boards = {
   arduino_nano: {
     name: 'Arduino Nano 328P',
@@ -240,6 +236,24 @@ export default function App() {
   const [rfInstance, setRfInstance] = useState<any>(null);
   const [selectedBoard, setSelectedBoard] = useState('arduino_nano');
 
+  // Event handler for changing pin
+  const handlePinChange = useCallback((nodeId: string, pinValue: string) => {
+    setNodes((nds) =>
+      nds.map((n) =>
+        n.id === nodeId ? { ...n, data: { ...n.data, pin: pinValue } } : n
+      )
+    );
+  }, [setNodes]);
+
+  // Event handler for changing number of inputs
+  const handleInputsChange = useCallback((nodeId: string, inputsValue: number) => {
+    setNodes((nds) =>
+      nds.map((n) =>
+        n.id === nodeId ? { ...n, data: { ...n.data, inputs: inputsValue } } : n
+      )
+    );
+  }, [setNodes]);
+
   const onConnect = useCallback(
     (params: any) => setEdges((eds) => addEdge({ ...params }, eds)),
     [setEdges]
@@ -264,16 +278,11 @@ export default function App() {
       data: {
         label: type,
         inputs: 2,
-        onChangePin: (val: string) => {
-          setNodes((nds) =>
-            nds.map((n) =>
-              n.id === newNode.id ? { ...n, data: { ...n.data, pin: val } } : n
-            )
-          );
-        },
+        selectedBoard,
+        onChangePin: handlePinChange,
+        onChangeInputs: handleInputsChange,
       },
     };
-
 
     setNodes((nds) => nds.concat(newNode));
   };
@@ -283,7 +292,7 @@ export default function App() {
     event.dataTransfer.dropEffect = 'move';
   };
 
-  // ======= New Save / Load Functions using utils =======
+  // Save/Load Functions
   const handleDownload = () => {
     downloadJson({ nodes, edges, board: selectedBoard }, 'my-logic-project');
   };
@@ -291,13 +300,26 @@ export default function App() {
   const handleUpload = () => {
     uploadJson((data) => {
       if (data.nodes && data.edges) {
-        setNodes(data.nodes);
+        // Add event handlers to all nodes when loading
+        const updatedNodes = data.nodes.map((node: any) => ({
+          ...node,
+          data: {
+            ...node.data,
+            selectedBoard: data.board || selectedBoard,
+            onChangePin: handlePinChange,
+            onChangeInputs: handleInputsChange,
+          },
+        }));
+        
+        setNodes(updatedNodes);
         setEdges(data.edges);
+        if (data.board) setSelectedBoard(data.board);
       } else {
         alert('Invalid project file');
       }
     });
   };
+
   const uploadBytecode = () => {
     const config = { nodes, edges, board: selectedBoard };
     const bytecode = generateBytecode(config as any);
@@ -359,7 +381,6 @@ export default function App() {
           NOT
         </div>
 
-        {/* New buttons */}
         <button onClick={handleDownload} style={{ marginTop: 8, width: '100%' }}>
           Download Project
         </button>
@@ -373,7 +394,15 @@ export default function App() {
 
       <div style={{ flex: 1 }}>
         <ReactFlow
-          nodes={nodes.map(n => ({ ...n, data: { ...n.data, selectedBoard } }))}
+          nodes={nodes.map(n => ({ 
+            ...n, 
+            data: { 
+              ...n.data, 
+              selectedBoard,
+              onChangePin: handlePinChange,
+              onChangeInputs: n.type === 'andNode' || n.type === 'orNode' ? handleInputsChange : undefined
+            } 
+          }))}
           edges={edges}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
