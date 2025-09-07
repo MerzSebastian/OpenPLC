@@ -55,16 +55,17 @@ function LatchNode({ data, id }: any) {
   return (
     <div className={`${nodeBaseClasses} w-30 h-25 bg-orange-500 border-2 border-orange-800`}>
       <div className={titleClasses}>LATCH</div>
-      <Handle type="target" position={Position.Left} id="set" className={handleClasses} style={{ top: '30%' }} />
-      <Handle type="target" position={Position.Left} id="reset" className={handleClasses} style={{ top: '70%' }} />
+      <Handle type="target" position={Position.Left} id="set" className={handleClasses} style={{ top: '35%' }} />
+      <Handle type="target" position={Position.Left} id="reset" className={handleClasses} style={{ top: '55%' }} />
       <Handle type="source" position={Position.Right} id="out" className={handleClasses} />
-      
-      <div className="mt-1 text-xs">
+      <div className='absolute left-1 top-[35%] -mt-3 text-sm'>set</div>
+      <div className='absolute left-1 top-[55%] -mt-3 text-sm'>reset</div>
+      <div className="mt-8 text-xs flex">
         Initial:
         <select
           value={data.initialState || 0}
           onChange={(e) => data.onChangeInitialState(id, parseInt(e.target.value))}
-          className={`${inputClasses} ml-1 w-12`}
+          className={`${inputClasses} w-12 ml-2`}
         >
           <option value={0}>LOW</option>
           <option value={1}>HIGH</option>
