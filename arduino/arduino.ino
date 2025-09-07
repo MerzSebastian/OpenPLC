@@ -14,24 +14,27 @@
 #define OP_LATCH 16
 #define OP_PULSE 17
 #define OP_TOGGLE 18
-#define OP_DELAY 30
 
 const int MAX_INSTRUCTIONS = 100;
 const int MAX_VARIABLES = 20;
 
-// global variables for timer states
+// Global variables for program execution
+byte instructions[MAX_INSTRUCTIONS];
+int instructionLength = 0;
+int variables[MAX_VARIABLES];
+
+// Global variables for timer states
 unsigned long previousMillis[MAX_VARIABLES] = {0};
 bool timerState[MAX_VARIABLES] = {false};
 
-
-// global variables for toggle states
+// Global variables for toggle states
 bool toggleState[MAX_VARIABLES] = {false};
 bool toggleInitialized[MAX_VARIABLES] = {false};
 bool prevInputState[MAX_VARIABLES] = {false};
 
-byte instructions[MAX_INSTRUCTIONS];
-int instructionLength = 0;
-int variables[MAX_VARIABLES];
+// Global variables for debouncing
+unsigned long lastDebounceTime[MAX_VARIABLES] = {0};
+int lastButtonState[MAX_VARIABLES] = {LOW}; // Store the last stable button state
 
 void setup() {
   Serial.begin(9600);
@@ -51,10 +54,10 @@ void setup() {
 }
 
 void loop() {
+  // Execute instructions as fast as possible
   if (instructionLength > 0) {
     executeInstructions();
   }
-  delay(10);
 }
 
 void executeInstructions() {
@@ -76,7 +79,26 @@ void executeInstructions() {
       case OP_READ_PIN: {
         byte pin = instructions[pc++];
         byte varIndex = instructions[pc++];
-        variables[varIndex] = digitalRead(pin);
+        
+        // Read the pin
+        int reading = digitalRead(pin);
+        
+        // Improved debounce logic
+        if (reading != lastButtonState[varIndex]) {
+          // Reset the debouncing timer
+          lastDebounceTime[varIndex] = millis();
+        }
+        
+        if ((millis() - lastDebounceTime[varIndex]) > 30) {
+          // Whatever the reading is at, it's been there for longer than the debounce
+          // delay, so take it as the actual current state
+          if (reading != variables[varIndex]) {
+            variables[varIndex] = reading;
+          }
+        }
+        
+        // Save the reading for next time
+        lastButtonState[varIndex] = reading;
         break;
       }
       case OP_WRITE_PIN: {
@@ -158,11 +180,6 @@ void executeInstructions() {
         variables[outputVar] = result;
         break;
       }
-      case OP_DELAY: {
-        byte delayTime = instructions[pc++];
-        delay(delayTime * 10);
-        break;
-      }
       case OP_LATCH: {
         byte setVar = instructions[pc++];
         byte resetVar = instructions[pc++];
@@ -202,11 +219,13 @@ void executeInstructions() {
         
         unsigned long currentMillis = millis();
         
+        // Handle interval timing
         if (currentMillis - previousMillis[outputVar] >= interval) {
           previousMillis[outputVar] = currentMillis;
           timerState[outputVar] = true;
         }
         
+        // Handle pulse timing
         if (timerState[outputVar] && (currentMillis - previousMillis[outputVar] >= pulseLength)) {
           timerState[outputVar] = false;
         }
