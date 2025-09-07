@@ -35,6 +35,91 @@ const resetIdCounter = (nodes: any[]) => {
 };
 
 // === Node Definitions ===
+function LatchNode({ data, id }: any) {
+  return (
+    <div
+      style={{
+        width: 120,
+        height: 100,
+        backgroundColor: '#f97316',
+        border: '2px solid #9a3412',
+        borderRadius: 6,
+        padding: 4,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        color: 'white',
+        fontWeight: 'bold',
+        position: 'relative',
+      }}
+    >
+      <div>LATCH</div>
+      <Handle type="target" position={Position.Left} id="set" style={{ top: '30%', background: '#000' }} />
+      <Handle type="target" position={Position.Left} id="reset" style={{ top: '70%', background: '#000' }} />
+      <Handle type="source" position={Position.Right} id="out" style={{ background: '#000' }} />
+      
+      <div style={{ marginTop: 4, fontSize: '12px' }}>
+        Initial:
+        <select
+          value={data.initialState || 0}
+          onChange={(e) => data.onChangeInitialState(id, parseInt(e.target.value))}
+          style={{ width: 50, marginLeft: 4 }}
+        >
+          <option value={0}>LOW</option>
+          <option value={1}>HIGH</option>
+        </select>
+      </div>
+    </div>
+  );
+}
+
+function TimerNode({ data, id }: any) {
+  return (
+    <div
+      style={{
+        width: 150,
+        height: 120,
+        backgroundColor: '#06b6d4',
+        border: '2px solid #0e7490',
+        borderRadius: 6,
+        padding: 4,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        color: 'white',
+        fontWeight: 'bold',
+        position: 'relative',
+      }}
+    >
+      <div>TIMER</div>
+      <Handle type="source" position={Position.Right} id="out" style={{ background: '#000' }} />
+      
+      <div style={{ marginTop: 4, fontSize: '12px' }}>
+        <div>
+          Pulse (ms):
+          <input
+            type="number"
+            min="1"
+            value={data.pulseLength || 1000}
+            onChange={(e) => data.onChangePulseLength(id, parseInt(e.target.value))}
+            style={{ width: 60, marginLeft: 4 }}
+          />
+        </div>
+        <div>
+          Interval (ms):
+          <input
+            type="number"
+            min="1"
+            value={data.interval || 5000}
+            onChange={(e) => data.onChangeInterval(id, parseInt(e.target.value))}
+            style={{ width: 60, marginLeft: 4 }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function InputNode({ data, id }: any) {
   const pins = [
     ...((boards as any)[data.selectedBoard]?.digital || []),
@@ -251,7 +336,33 @@ export default function App() {
     andNode: AndNode,
     orNode: OrNode,
     notNode: NotNode,
+    latchNode: LatchNode,
+    timerNode: TimerNode,
   }), []);
+
+  const handleInitialStateChange = useCallback((nodeId: string, initialState: number) => {
+    setNodes((nds) =>
+      nds.map((n) =>
+        n.id === nodeId ? { ...n, data: { ...n.data, initialState } } : n
+      )
+    );
+  }, [setNodes]);
+
+  const handlePulseLengthChange = useCallback((nodeId: string, pulseLength: number) => {
+    setNodes((nds) =>
+      nds.map((n) =>
+        n.id === nodeId ? { ...n, data: { ...n.data, pulseLength } } : n
+      )
+    );
+  }, [setNodes]);
+
+  const handleIntervalChange = useCallback((nodeId: string, interval: number) => {
+    setNodes((nds) =>
+      nds.map((n) =>
+        n.id === nodeId ? { ...n, data: { ...n.data, interval } } : n
+      )
+    );
+  }, [setNodes]);
 
   // Event handler for changing pin
   const handlePinChange = useCallback((nodeId: string, pinValue: string) => {
@@ -404,6 +515,20 @@ export default function App() {
         >
           NOT
         </div>
+        <div
+          onDragStart={(e) => onDragStart(e, 'latchNode')}
+          draggable
+          style={{ padding: 4, margin: 2, backgroundColor: '#f97316', cursor: 'move' }}
+        >
+          LATCH
+        </div>
+        <div
+          onDragStart={(e) => onDragStart(e, 'timerNode')}
+          draggable
+          style={{ padding: 4, margin: 2, backgroundColor: '#06b6d4', cursor: 'move' }}
+        >
+          TIMER
+        </div>
 
         <button onClick={handleDownload} style={{ marginTop: 8, width: '100%' }}>
           Download Project
@@ -424,7 +549,10 @@ export default function App() {
               ...n.data,
               selectedBoard,
               onChangePin: handlePinChange,
-              onChangeInputs: n.type === 'andNode' || n.type === 'orNode' ? handleInputsChange : undefined
+              onChangeInputs: n.type === 'andNode' || n.type === 'orNode' ? handleInputsChange : undefined,
+              onChangeInitialState: n.type === 'latchNode' ? handleInitialStateChange : undefined,
+              onChangePulseLength: n.type === 'timerNode' ? handlePulseLengthChange : undefined,
+              onChangeInterval: n.type === 'timerNode' ? handleIntervalChange : undefined,
             }
           }))}
           edges={edges}

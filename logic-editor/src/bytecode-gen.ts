@@ -1,4 +1,19 @@
-
+// Enhanced bytecode-gen.ts with Latch and Timer support
+export const OP_SET_PIN_MODE_INPUT = 1;
+export const OP_SET_PIN_MODE_OUTPUT = 2;
+export const OP_READ_PIN = 3;
+export const OP_WRITE_PIN = 4;
+export const OP_READ_ANALOG_PIN = 5;
+export const OP_WRITE_ANALOG_PIN = 6;
+export const OP_NOT = 10;
+export const OP_AND = 11;
+export const OP_OR = 12;
+export const OP_NAND = 13;
+export const OP_NOR = 14;
+export const OP_XOR = 15;
+export const OP_LATCH = 16;
+export const OP_TIMER = 17;
+export const OP_DELAY = 30;
 
 // Types for the logic configuration
 interface Position {
@@ -10,6 +25,9 @@ interface NodeData {
   label: string;
   inputs?: number;
   pin?: string;
+  initialState?: number;
+  pulseLength?: number;
+  interval?: number;
 }
 
 interface Node {
@@ -17,8 +35,8 @@ interface Node {
   type: string;
   position: Position;
   data: NodeData;
-  width: number;
-  height: number;
+  width?: number;
+  height?: number;
   selected?: boolean;
   positionAbsolute?: Position;
   dragging?: boolean;
@@ -37,20 +55,6 @@ interface LogicConfig {
   edges: Edge[];
   board: string;
 }
-// Enhanced bytecode-gen.ts with dynamic input handling
-export const OP_SET_PIN_MODE_INPUT = 1;
-export const OP_SET_PIN_MODE_OUTPUT = 2;
-export const OP_READ_PIN = 3;
-export const OP_WRITE_PIN = 4;
-export const OP_READ_ANALOG_PIN = 5;
-export const OP_WRITE_ANALOG_PIN = 6;
-export const OP_NOT = 10;
-export const OP_AND = 11;
-export const OP_OR = 12;
-export const OP_NAND = 13;
-export const OP_NOR = 14;
-export const OP_XOR = 15;
-export const OP_DELAY = 30;
 
 // Function to generate bytecode with dynamic input handling
 export function generateBytecode(config: LogicConfig): number[] {
@@ -152,80 +156,114 @@ export function generateBytecode(config: LogicConfig): number[] {
     } else {
       // Logic gate node
       const gateType = node.type;
-      const inputVars: number[] = [];
       
-      for (const edge of edges) {
-        if (edge.target === nodeId) {
-          const sourceNodeId = edge.source;
-          if (varIndexMap[sourceNodeId] !== undefined) {
-            inputVars.push(varIndexMap[sourceNodeId]);
-          }
-        }
-      }
-      
-      if (varIndexMap[nodeId] === undefined) continue;
-      
-      const outputVar = varIndexMap[nodeId];
-      
-      // Handle dynamic number of inputs
+      // Handle different node types
       switch (gateType) {
-        case 'notNode':
-          if (inputVars.length >= 1) {
+        case 'notNode': {
+          const inputVars: number[] = [];
+          for (const edge of edges) {
+            if (edge.target === nodeId) {
+              const sourceNodeId = edge.source;
+              if (varIndexMap[sourceNodeId] !== undefined) {
+                inputVars.push(varIndexMap[sourceNodeId]);
+              }
+            }
+          }
+          
+          if (inputVars.length >= 1 && varIndexMap[nodeId] !== undefined) {
             instructions.push(OP_NOT);
             instructions.push(inputVars[0]);
-            instructions.push(outputVar);
+            instructions.push(varIndexMap[nodeId]);
           }
           break;
-        case 'andNode':
-          if (inputVars.length >= 2) {
+        }
+        case 'andNode': {
+          const inputVars: number[] = [];
+          for (const edge of edges) {
+            if (edge.target === nodeId) {
+              const sourceNodeId = edge.source;
+              if (varIndexMap[sourceNodeId] !== undefined) {
+                inputVars.push(varIndexMap[sourceNodeId]);
+              }
+            }
+          }
+          
+          if (inputVars.length >= 2 && varIndexMap[nodeId] !== undefined) {
             instructions.push(OP_AND);
-            instructions.push(inputVars.length); // Number of inputs
+            instructions.push(inputVars.length);
             for (const inputVar of inputVars) {
               instructions.push(inputVar);
             }
-            instructions.push(outputVar);
+            instructions.push(varIndexMap[nodeId]);
           }
           break;
-        case 'orNode':
-          if (inputVars.length >= 2) {
+        }
+        case 'orNode': {
+          const inputVars: number[] = [];
+          for (const edge of edges) {
+            if (edge.target === nodeId) {
+              const sourceNodeId = edge.source;
+              if (varIndexMap[sourceNodeId] !== undefined) {
+                inputVars.push(varIndexMap[sourceNodeId]);
+              }
+            }
+          }
+          
+          if (inputVars.length >= 2 && varIndexMap[nodeId] !== undefined) {
             instructions.push(OP_OR);
-            instructions.push(inputVars.length); // Number of inputs
+            instructions.push(inputVars.length);
             for (const inputVar of inputVars) {
               instructions.push(inputVar);
             }
-            instructions.push(outputVar);
+            instructions.push(varIndexMap[nodeId]);
           }
           break;
-        case 'nandNode':
-          if (inputVars.length >= 2) {
-            instructions.push(OP_NAND);
-            instructions.push(inputVars.length); // Number of inputs
-            for (const inputVar of inputVars) {
-              instructions.push(inputVar);
+        }
+        case 'latchNode': {
+          // Find set and reset inputs
+          let setVar = -1;
+          let resetVar = -1;
+          
+          for (const edge of edges) {
+            if (edge.target === nodeId) {
+              const sourceNodeId = edge.source;
+              if (varIndexMap[sourceNodeId] !== undefined) {
+                if (edge.targetHandle === 'set') {
+                  setVar = varIndexMap[sourceNodeId];
+                } else if (edge.targetHandle === 'reset') {
+                  resetVar = varIndexMap[sourceNodeId];
+                }
+              }
             }
+          }
+          
+          if (setVar >= 0 && resetVar >= 0 && varIndexMap[nodeId] !== undefined) {
+            const outputVar = varIndexMap[nodeId];
+            const initialState = node.data.initialState || 0;
+            
+            instructions.push(OP_LATCH);
+            instructions.push(setVar);
+            instructions.push(resetVar);
             instructions.push(outputVar);
+            instructions.push(initialState);
           }
           break;
-        case 'norNode':
-          if (inputVars.length >= 2) {
-            instructions.push(OP_NOR);
-            instructions.push(inputVars.length); // Number of inputs
-            for (const inputVar of inputVars) {
-              instructions.push(inputVar);
-            }
+        }
+        case 'timerNode': {
+          if (varIndexMap[nodeId] !== undefined) {
+            const outputVar = varIndexMap[nodeId];
+            const pulseLength = node.data.pulseLength || 1000;
+            const interval = node.data.interval || 5000;
+            
+            instructions.push(OP_TIMER);
             instructions.push(outputVar);
+            instructions.push(pulseLength & 0xFF);
+            instructions.push((pulseLength >> 8) & 0xFF);
+            instructions.push(interval & 0xFF);
+            instructions.push((interval >> 8) & 0xFF);
           }
           break;
-        case 'xorNode':
-          if (inputVars.length >= 2) {
-            instructions.push(OP_XOR);
-            instructions.push(inputVars.length); // Number of inputs
-            for (const inputVar of inputVars) {
-              instructions.push(inputVar);
-            }
-            instructions.push(outputVar);
-          }
-          break;
+        }
       }
     }
   }
