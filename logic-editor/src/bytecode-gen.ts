@@ -12,7 +12,7 @@ export const OP_NAND = 13;
 export const OP_NOR = 14;
 export const OP_XOR = 15;
 export const OP_LATCH = 16;
-export const OP_TIMER = 17;
+export const OP_PULSE = 17;
 export const OP_DELAY = 30;
 
 // Types for the logic configuration
@@ -249,13 +249,13 @@ export function generateBytecode(config: LogicConfig): number[] {
           }
           break;
         }
-        case 'timerNode': {
+        case 'pulseNode': {
           if (varIndexMap[nodeId] !== undefined) {
             const outputVar = varIndexMap[nodeId];
             const pulseLength = node.data.pulseLength || 1000;
             const interval = node.data.interval || 5000;
             
-            instructions.push(OP_TIMER);
+            instructions.push(OP_PULSE);
             instructions.push(outputVar);
             instructions.push(pulseLength & 0xFF);
             instructions.push((pulseLength >> 8) & 0xFF);

@@ -12,7 +12,7 @@
 #define OP_NOR 14
 #define OP_XOR 15
 #define OP_LATCH 16
-#define OP_TIMER 17
+#define OP_PULSE 17
 #define OP_DELAY 30
 
 const int MAX_INSTRUCTIONS = 100;
@@ -186,7 +186,7 @@ void executeInstructions() {
         variables[outputVar] = latchState[outputVar];
         break;
       }
-      case OP_TIMER: {
+      case OP_PULSE: {
         byte outputVar = instructions[pc++];
         unsigned int pulseLength = instructions[pc++];
         pulseLength |= (instructions[pc++] << 8);

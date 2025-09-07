@@ -47,7 +47,7 @@ const blockTypes = [
   { type: 'orNode', label: 'OR', color: 'bg-purple-500' },
   { type: 'notNode', label: 'NOT', color: 'bg-yellow-500' },
   { type: 'latchNode', label: 'LATCH', color: 'bg-orange-500' },
-  { type: 'timerNode', label: 'TIMER', color: 'bg-cyan-500' },
+  { type: 'pulseNode', label: 'PULSE', color: 'bg-cyan-500' },
 ];
 
 // === Node Definitions ===
@@ -75,10 +75,10 @@ function LatchNode({ data, id }: any) {
   );
 }
 
-function TimerNode({ data, id }: any) {
+function PulseNode({ data, id }: any) {
   return (
     <div className={`${nodeBaseClasses} w-44 h-30 bg-cyan-500 border-2 border-cyan-800`}>
-      <div className={titleClasses}>TIMER</div>
+      <div className={titleClasses}>PULSE</div>
       <Handle type="source" position={Position.Right} id="out" className={handleClasses} />
       
       <div className="mt-1 text-xs space-y-1">
@@ -285,7 +285,7 @@ export default function App() {
     orNode: OrNode,
     notNode: NotNode,
     latchNode: LatchNode,
-    timerNode: TimerNode,
+    pulseNode: PulseNode,
   }), []);
 
   const handleInitialStateChange = useCallback((nodeId: string, initialState: number) => {
@@ -477,8 +477,8 @@ export default function App() {
               onChangePin: handlePinChange,
               onChangeInputs: n.type === 'andNode' || n.type === 'orNode' ? handleInputsChange : undefined,
               onChangeInitialState: n.type === 'latchNode' ? handleInitialStateChange : undefined,
-              onChangePulseLength: n.type === 'timerNode' ? handlePulseLengthChange : undefined,
-              onChangeInterval: n.type === 'timerNode' ? handleIntervalChange : undefined,
+              onChangePulseLength: n.type === 'pulseNode' ? handlePulseLengthChange : undefined,
+              onChangeInterval: n.type === 'pulseNode' ? handleIntervalChange : undefined,
             }
           }))}
           edges={edges}
