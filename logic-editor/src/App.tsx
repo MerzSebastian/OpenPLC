@@ -40,6 +40,17 @@ const handleClasses = "bg-black";
 const titleClasses = "text-center mb-1";
 const inputClasses = "w-full bg-white/20 rounded px-1 text-black text-xs";
 
+// Block definitions for the sidebar
+const blockTypes = [
+  { type: 'inputNode', label: 'INPUT', color: 'bg-green-500' },
+  { type: 'outputNode', label: 'OUTPUT', color: 'bg-red-500' },
+  { type: 'andNode', label: 'AND', color: 'bg-blue-500' },
+  { type: 'orNode', label: 'OR', color: 'bg-purple-500' },
+  { type: 'notNode', label: 'NOT', color: 'bg-yellow-500' },
+  { type: 'latchNode', label: 'LATCH', color: 'bg-orange-500' },
+  { type: 'timerNode', label: 'TIMER', color: 'bg-cyan-500' },
+];
+
 // === Node Definitions ===
 function LatchNode({ data, id }: any) {
   return (
@@ -432,55 +443,18 @@ export default function App() {
         </div>
 
         <h3 className="font-bold">Blocks</h3>
-        <div
-          onDragStart={(e) => onDragStart(e, 'inputNode')}
-          draggable
-          className="p-1 m-0.5 bg-green-500 cursor-move"
-        >
-          INPUT
-        </div>
-        <div
-          onDragStart={(e) => onDragStart(e, 'outputNode')}
-          draggable
-          className="p-1 m-0.5 bg-red-500 cursor-move"
-        >
-          OUTPUT
-        </div>
-        <div
-          onDragStart={(e) => onDragStart(e, 'andNode')}
-          draggable
-          className="p-1 m-0.5 bg-blue-500 cursor-move"
-        >
-          AND
-        </div>
-        <div
-          onDragStart={(e) => onDragStart(e, 'orNode')}
-          draggable
-          className="p-1 m-0.5 bg-purple-500 cursor-move"
-        >
-          OR
-        </div>
-        <div
-          onDragStart={(e) => onDragStart(e, 'notNode')}
-          draggable
-          className="p-1 m-0.5 bg-yellow-500 cursor-move"
-        >
-          NOT
-        </div>
-        <div
-          onDragStart={(e) => onDragStart(e, 'latchNode')}
-          draggable
-          className="p-1 m-0.5 bg-orange-500 cursor-move"
-        >
-          LATCH
-        </div>
-        <div
-          onDragStart={(e) => onDragStart(e, 'timerNode')}
-          draggable
-          className="p-1 m-0.5 bg-cyan-500 cursor-move"
-        >
-          TIMER
-        </div>
+        
+        {/* Simplified block list using array map */}
+        {blockTypes.map((block) => (
+          <div
+            key={block.type}
+            onDragStart={(e) => onDragStart(e, block.type)}
+            draggable
+            className={`p-1 m-0.5 ${block.color} cursor-move`}
+          >
+            {block.label}
+          </div>
+        ))}
 
         <button onClick={handleDownload} className="mt-2 w-full bg-blue-500 text-white p-1 rounded">
           Download Project
