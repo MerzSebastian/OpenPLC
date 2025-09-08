@@ -191,8 +191,8 @@ function AndNode({ data, id }: any) {
 
   return (
     <div
-      className={`${nodeBaseClasses} bg-blue-500 border-2 border-blue-700`}
-      style={{ width: 100, minHeight: dynamicHeight }}
+      className={`${nodeBaseClasses} bg-blue-500 w-28 border-2 border-blue-700`}
+      style={{ minHeight: dynamicHeight }}
     >
       <div className={titleClasses}>AND</div>
       {Array.from({ length: inputs }).map((_, idx) => (
@@ -214,6 +214,7 @@ function AndNode({ data, id }: any) {
           max={8}
           value={inputs}
           onChange={(e) => data.onChangeInputs(id, parseInt(e.target.value))}
+          onMouseUp={(e) => {e.stopPropagation(); e.preventDefault()}}
           className={`${inputClasses} w-8 ml-2`}
         />
       </div>
@@ -224,7 +225,7 @@ function AndNode({ data, id }: any) {
 function OrNode({ data, id }: any) {
   const { inputs = 2 } = data;
   return (
-    <div className={`${nodeBaseClasses} w-25 min-h-12 bg-purple-500 border-2 border-purple-700`}>
+    <div className={`${nodeBaseClasses} w-28 min-h-12 bg-purple-500 border-2 border-purple-700`}>
       <div className={titleClasses}>OR</div>
       {Array.from({ length: inputs }).map((_, idx) => (
         <Handle
@@ -237,7 +238,7 @@ function OrNode({ data, id }: any) {
         />
       ))}
       <Handle type="source" position={Position.Right} id="out" className={handleClasses} />
-      <div className="mt-1 text-xs">
+      <div className="mt-1 text-xs flex">
         Inputs:
         <input
           type="number"
