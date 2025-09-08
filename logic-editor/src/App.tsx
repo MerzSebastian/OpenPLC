@@ -214,7 +214,6 @@ function AndNode({ data, id }: any) {
           max={8}
           value={inputs}
           onChange={(e) => data.onChangeInputs(id, parseInt(e.target.value))}
-          onMouseUp={(e) => {e.stopPropagation(); e.preventDefault()}}
           className={`${inputClasses} w-8 ml-2`}
         />
       </div>
