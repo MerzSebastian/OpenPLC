@@ -559,7 +559,7 @@ export default function App() {
 
       // Set a timeout for reading response
       const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Timeout waiting for response')), 60000)
+        setTimeout(() => reject(new Error('Timeout waiting for response')), 10000)
       );
 
       try {

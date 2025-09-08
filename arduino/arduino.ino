@@ -17,8 +17,8 @@
 #define OP_PULSE 17
 #define OP_TOGGLE 18
 
-const int MAX_INSTRUCTIONS = 100;
-const int MAX_VARIABLES = 20;
+const int MAX_INSTRUCTIONS = 300;
+const int MAX_VARIABLES = 60;
 
 // EEPROM addresses
 #define EEPROM_SIGNATURE 0
