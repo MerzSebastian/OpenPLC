@@ -443,21 +443,45 @@ export default function App() {
     });
   };
 
-  const copyBytecode = () => {
-    const config = { nodes, edges, board: selectedBoard };
-    const bytecode = generateBytecode(config as any);
-    const bytecodeStr = bytecodeToString(bytecode);
-    navigator.clipboard.writeText(bytecodeStr)
-      .then(() => {
-        setUploadStatus('Bytecode copied to clipboard!');
-        setTimeout(() => setUploadStatus(null), 3000);
-      })
-      .catch(err => {
-        console.error('Failed to copy: ', err);
-        setUploadStatus('Failed to copy bytecode');
-        setTimeout(() => setUploadStatus(null), 3000);
-      });
+  const getArduinoInoFile = async () => {
+      const githubUrl = 'https://raw.githubusercontent.com/MerzSebastian/OpenPLC/refs/heads/feature/webserial/arduino/arduino.ino';
+      const response = await fetch(githubUrl);
+      return await response.text();
   }
+
+  const copyArduinoCode = async () => {
+    await navigator.clipboard.writeText(await getArduinoInoFile());
+    setUploadStatus('.ino copied to clipboard!');
+  }
+
+  const copyBytecode = async () => {
+    try {
+      const config = { nodes, edges, board: selectedBoard };
+      const bytecode = generateBytecode(config as any);
+      const bytecodeStr = bytecodeToString(bytecode);
+      let inoContent = await getArduinoInoFile();
+
+      // Replace "// #define WOKWI" with "#define WOKWI"
+      inoContent = inoContent.replace(/^\s*\/\/\s*#define\s+WOKWI.*$/m, '#define WOKWI');
+
+      // Replace the line with "byte myBytecode..."
+      inoContent = inoContent.replace(
+        /^\s*byte\s+myBytecode.*$/m,
+        `byte myBytecode[] = {${bytecodeStr}};`
+      );
+
+      // Copy the modified ino content to clipboard
+      await navigator.clipboard.writeText(inoContent);
+
+      setUploadStatus('.ino copied to clipboard!');
+      setTimeout(() => setUploadStatus(null), 3000);
+    } catch (err) {
+      console.error('Failed to copy: ', err);
+      setUploadStatus('Failed to copy modified .ino');
+      setTimeout(() => setUploadStatus(null), 3000);
+    }
+  };
+
 
   // WebSerial transmission function
   const uploadBytecodeViaWebSerial = async () => {
@@ -505,7 +529,7 @@ export default function App() {
 
       // Set a timeout for reading response
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Timeout waiting for response')), 8000)
+        setTimeout(() => reject(new Error('Timeout waiting for response')), 60000)
       );
 
       try {
@@ -555,7 +579,7 @@ export default function App() {
 
   return (
     <div className="flex h-screen">
-      <div className="w-50 bg-gray-200 p-2">
+      <div className="w-80 bg-gray-200 p-2">
         <div className="mb-3">
           <label>Board: </label>
           <select
@@ -585,18 +609,22 @@ export default function App() {
           </div>
         ))}
 
-        <button onClick={handleDownload} className="mt-2 w-full bg-blue-500 text-white p-1 rounded">
+        <button onClick={handleDownload} className="mt-6 w-full bg-blue-500 text-white p-1 rounded">
           Download Project
         </button>
         <button onClick={handleUpload} className="mt-1 w-full bg-gray-500 text-white p-1 rounded">
           Load Project
         </button>
         <button onClick={copyBytecode} className="mt-1 w-full bg-green-600 text-white p-1 rounded">
-          Copy for Wokwi
+          Copy Code for testing on Wokwi.com
+        </button>
+        <button onClick={copyArduinoCode} className="mt-1 w-full bg-orange-600 text-white p-1 rounded">
+          Copy Arduino Code
         </button>
         <button onClick={uploadBytecodeViaWebSerial} className="mt-1 w-full bg-purple-600 text-white p-1 rounded">
-          Upload via WebSerial
+          Upload Project to Arduino
         </button>
+        When you want to test on Wokwi.com you can use see the default project <a className='text-blue-700' href='https://wokwi.com/projects/441553408946374657'>here</a>
         
         {uploadStatus && (
           <div className={`mt-2 p-2 text-center text-sm rounded ${
