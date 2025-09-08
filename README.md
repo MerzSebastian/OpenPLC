@@ -2,6 +2,8 @@
 
 A visual programming interface for Arduino controllers built with React and React Flow. This project allows users to create logic circuits using a block-based interface and generates optimized bytecode for Arduino microcontrollers.
 
+![alt text](https://raw.githubusercontent.com/MerzSebastian/OpenPLC/refs/heads/main/documentation/ui.png)
+
 **Live Demo**: https://merzsebastian.github.io/OpenPLC/
 
 **License**: CC BY-NC 4.0
