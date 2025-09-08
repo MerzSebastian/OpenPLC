@@ -529,6 +529,7 @@ export default function App() {
         reader.releaseLock();
       }
 
+      await new Promise(resolve => setTimeout(resolve, 2000)); //just to be safe
       // Close the port
       await port.close();
 
