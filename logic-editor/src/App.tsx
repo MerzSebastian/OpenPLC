@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import ReactFlow, {
   addEdge,
   MiniMap,
@@ -12,6 +12,7 @@ import ReactFlow, {
 import 'reactflow/dist/style.css';
 import { downloadJson, uploadJson } from './utils';
 import { bytecodeToString, generateBytecode } from './bytecode-gen';
+import { defaultProject } from './sample-project';
 
 // Improved ID management
 let nodeIdCounter = 0;
@@ -313,6 +314,11 @@ export default function App() {
     toggleNode: ToggleNode,
   }), []);
 
+  // Load default project on first render
+  useEffect(() => {
+    loadProjectData(defaultProject);
+  }, []);
+
   const handleInitialStateChange = useCallback((nodeId: string, initialState: number) => {
     setNodes((nds) =>
       nds.map((n) =>
@@ -417,30 +423,54 @@ export default function App() {
     downloadJson({ nodes, edges, board: selectedBoard }, 'my-logic-project');
   };
 
+  // Function to load project data (reusable)
+  const loadProjectData = (data: any) => {
+    // Reset ID counter based on loaded nodes
+    resetIdCounter(data.nodes);
+
+    // Add event handlers to all nodes when loading
+    const updatedNodes = data.nodes.map((node: any) => ({
+      ...node,
+      data: {
+        ...node.data,
+        selectedBoard: data.board || selectedBoard,
+        onChangePin: handlePinChange,
+        onChangeInputs: handleInputsChange,
+        onChangeInitialState: node.type === 'latchNode' || node.type === 'toggleNode' ? handleInitialStateChange : undefined,
+        onChangePulseLength: node.type === 'pulseNode' ? handlePulseLengthChange : undefined,
+        onChangeInterval: node.type === 'pulseNode' ? handleIntervalChange : undefined,
+      },
+    }));
+
+    setNodes(updatedNodes);
+    setEdges(data.edges);
+    if (data.board) setSelectedBoard(data.board);
+  };
+
   const handleUpload = () => {
     uploadJson((data) => {
       if (data.nodes && data.edges) {
-        // Reset ID counter based on loaded nodes
-        resetIdCounter(data.nodes);
-
-        // Add event handlers to all nodes when loading
-        const updatedNodes = data.nodes.map((node: any) => ({
-          ...node,
-          data: {
-            ...node.data,
-            selectedBoard: data.board || selectedBoard,
-            onChangePin: handlePinChange,
-            onChangeInputs: handleInputsChange,
-          },
-        }));
-
-        setNodes(updatedNodes);
-        setEdges(data.edges);
-        if (data.board) setSelectedBoard(data.board);
+        loadProjectData(data);
       } else {
         alert('Invalid project file');
       }
     });
+  };
+
+  // Reset UI function
+  const handleReset = () => {
+    setNodes([]);
+    setEdges([]);
+    nodeIdCounter = 0;
+    setUploadStatus('UI has been reset');
+    setTimeout(() => setUploadStatus(null), 3000);
+  };
+
+  // Load default project function
+  const loadDefaultProject = () => {
+    loadProjectData(defaultProject);
+    setUploadStatus('Default project loaded');
+    setTimeout(() => setUploadStatus(null), 3000);
   };
 
   const getArduinoInoFile = async () => {
@@ -609,26 +639,32 @@ export default function App() {
           </div>
         ))}
 
-        <button onClick={handleDownload} className="mt-6 w-full bg-blue-500 text-white p-1 rounded">
-          Download Project
-        </button>
-        <button onClick={handleUpload} className="mt-1 w-full bg-gray-500 text-white p-1 rounded">
+        <button onClick={handleUpload} className="mt-6 w-full bg-gray-500 text-white p-1 rounded">
           Load Project
         </button>
-        <button onClick={copyBytecode} className="mt-1 w-full bg-green-600 text-white p-1 rounded">
+        <button onClick={handleDownload} className="mt-1 w-full bg-blue-500 text-white p-1 rounded">
+          Download Project
+        </button>
+        <button onClick={handleReset} className="mt-1 w-full bg-red-500 text-white p-1 rounded">
+          Reset Project
+        </button>
+        <button onClick={loadDefaultProject} className="mt-1 w-full bg-indigo-500 text-white p-1 rounded">
+          Load Default Project
+        </button>
+        <button onClick={uploadBytecodeViaWebSerial} className="mt-6 w-full bg-purple-600 text-white p-1 rounded">
+          Upload Project to Arduino
+        </button>
+        <button onClick={copyBytecode} className="mt-1 mb-5 w-full bg-green-600 text-white p-1 rounded">
           Copy Code for testing on Wokwi.com
         </button>
         <button onClick={copyArduinoCode} className="mt-1 w-full bg-orange-600 text-white p-1 rounded">
           Copy Arduino Code
         </button>
-        <button onClick={uploadBytecodeViaWebSerial} className="mt-1 w-full bg-purple-600 text-white p-1 rounded">
-          Upload Project to Arduino
-        </button>
         When you want to test on Wokwi.com you can use see the default project <a className='text-blue-700' href='https://wokwi.com/projects/441553408946374657'>here</a>
         
         {uploadStatus && (
           <div className={`mt-2 p-2 text-center text-sm rounded ${
-            uploadStatus.includes('success') || uploadStatus.includes('copied') 
+            uploadStatus.includes('success') || uploadStatus.includes('copied') || uploadStatus.includes('loaded') || uploadStatus.includes('reset')
               ? 'bg-green-100 text-green-800' 
               : 'bg-red-100 text-red-800'
           }`}>
