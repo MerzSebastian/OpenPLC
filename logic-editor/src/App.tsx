@@ -299,6 +299,7 @@ export default function App() {
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [rfInstance, setRfInstance] = useState<any>(null);
   const [selectedBoard, setSelectedBoard] = useState('arduino_nano');
+  const [uploadStatus, setUploadStatus] = useState<string | null>(null);
 
   // Memoize nodeTypes to prevent recreation on each render
   const nodeTypes = useMemo(() => ({
@@ -442,11 +443,114 @@ export default function App() {
     });
   };
 
-  const uploadBytecode = () => {
+  const copyBytecode = () => {
     const config = { nodes, edges, board: selectedBoard };
     const bytecode = generateBytecode(config as any);
-    console.log(bytecodeToString(bytecode));
+    const bytecodeStr = bytecodeToString(bytecode);
+    navigator.clipboard.writeText(bytecodeStr)
+      .then(() => {
+        setUploadStatus('Bytecode copied to clipboard!');
+        setTimeout(() => setUploadStatus(null), 3000);
+      })
+      .catch(err => {
+        console.error('Failed to copy: ', err);
+        setUploadStatus('Failed to copy bytecode');
+        setTimeout(() => setUploadStatus(null), 3000);
+      });
   }
+
+  // WebSerial transmission function
+  const uploadBytecodeViaWebSerial = async () => {
+    if (!('serial' in navigator)) {
+      setUploadStatus('WebSerial API not supported in this browser');
+      setTimeout(() => setUploadStatus(null), 3000);
+      return;
+    }
+
+    try {
+      // Request a port and open it
+      const port = await (navigator as any).serial.requestPort();
+      await port.open({ baudRate: 9600 });
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // Generate bytecode
+      const config = { nodes, edges, board: selectedBoard };
+      const bytecode = generateBytecode(config as any);
+
+      // Create message with structure [START_BYTE][LENGTH][DATA...][CHECKSUM]
+      const START_BYTE = 0x7E;
+      const LENGTH = bytecode.length;
+      
+      // Calculate checksum
+      let checksum = 0;
+      for (let i = 0; i < bytecode.length; i++) {
+        checksum = (checksum + bytecode[i]) % 256;
+      }
+
+      // Create message array
+      const message = [START_BYTE, LENGTH, ...bytecode, checksum];
+      
+      // Convert to Uint8Array
+      const data = new Uint8Array(message);
+      
+      // Write the data
+      const writer = port.writable.getWriter();
+      await writer.write(data);
+      writer.releaseLock();
+
+      // Read response from Arduino
+      const reader = port.readable.getReader();
+      let responseReceived = false;
+      let response = '';
+
+      // Set a timeout for reading response
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout waiting for response')), 8000)
+      );
+
+      try {
+        const readPromise = (async () => {
+          while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+            
+            response += new TextDecoder().decode(value);
+            if (response.includes('SUCCESS') || response.includes('ERROR')) {
+              responseReceived = true;
+              break;
+            }
+          }
+        })();
+
+        await Promise.race([readPromise, timeoutPromise]);
+      } catch (error) {
+        console.error('Error reading response:', error);
+      } finally {
+        reader.releaseLock();
+      }
+
+      // Close the port
+      await port.close();
+
+      if (responseReceived) {
+        if (response.includes('SUCCESS')) {
+          setUploadStatus('Upload successful!');
+        } else if (response.includes('ERROR')) {
+          setUploadStatus('Upload failed: Checksum error');
+        } else {
+          setUploadStatus('Upload completed but no valid response received');
+        }
+      } else {
+        setUploadStatus('Upload completed but no response received (timeout)');
+      }
+
+      setTimeout(() => setUploadStatus(null), 5000);
+    } catch (error) {
+      console.error('WebSerial error:', error);
+      setUploadStatus(`Upload failed: ${(error as any)?.message}`);
+      setTimeout(() => setUploadStatus(null), 5000);
+    }
+  };
 
   return (
     <div className="flex h-screen">
@@ -486,9 +590,22 @@ export default function App() {
         <button onClick={handleUpload} className="mt-1 w-full bg-gray-500 text-white p-1 rounded">
           Load Project
         </button>
-        <button onClick={uploadBytecode} className="mt-1 w-full bg-green-600 text-white p-1 rounded">
-          Flash
+        <button onClick={copyBytecode} className="mt-1 w-full bg-green-600 text-white p-1 rounded">
+          Copy for Wokwi
         </button>
+        <button onClick={uploadBytecodeViaWebSerial} className="mt-1 w-full bg-purple-600 text-white p-1 rounded">
+          Upload via WebSerial
+        </button>
+        
+        {uploadStatus && (
+          <div className={`mt-2 p-2 text-center text-sm rounded ${
+            uploadStatus.includes('success') || uploadStatus.includes('copied') 
+              ? 'bg-green-100 text-green-800' 
+              : 'bg-red-100 text-red-800'
+          }`}>
+            {uploadStatus}
+          </div>
+        )}
       </div>
 
       <div className="flex-1">
