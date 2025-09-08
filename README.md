@@ -2,18 +2,22 @@
 
 A visual programming interface for OpenPLC built with React and React Flow. This project allows users to create logic circuits using a block-based interface and generates bytecode for PLC controllers.
 
+https://merzsebastian.github.io/OpenPLC/
+
 License: CC BY-NC 4.0
 
 ## Current Status
 
-This project is in active development. The editor provides a visual interface for creating logic circuits with various blocks including inputs, outputs, logic gates, latches, and timers.
+Thrown together weekend project. May continou updating it once in a while :)
+Needs some cleanup and structuring. also its my first react project so best pracitces are not found here
+
 
 ### Current Features:
 - Drag-and-drop block interface
-- Support for digital I/O blocks
+- Support for digital I/O blocks (only tested with digital pins, analog pins may still be broken)
 - Logic gates (AND, OR, NOT) with configurable inputs
 - SR Latch block with configurable initial state
-- Timer block with pulse and interval settings
+- Pulse block with pulse length and interval settings
 - Project save/load functionality
 - Bytecode generation for Arduino-compatible controllers
 
