@@ -314,11 +314,6 @@ export default function App() {
     toggleNode: ToggleNode,
   }), []);
 
-  // Load default project on first render
-  useEffect(() => {
-    loadProjectData(defaultProject);
-  }, []);
-
   const handleInitialStateChange = useCallback((nodeId: string, initialState: number) => {
     setNodes((nds) =>
       nds.map((n) =>
@@ -445,7 +440,7 @@ export default function App() {
     setNodes(updatedNodes);
     setEdges(data.edges);
     if (data.board) setSelectedBoard(data.board);
-  }, [selectedBoard, handlePinChange, handleInputsChange, handleInitialStateChange, handlePulseLengthChange, handleIntervalChange]);
+  }, [selectedBoard, handlePinChange, handleInputsChange, handleInitialStateChange, handlePulseLengthChange, handleIntervalChange, setNodes, setEdges]);
 
   // Then use it in your useEffect
   useEffect(() => {
