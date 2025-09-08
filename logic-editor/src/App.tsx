@@ -424,8 +424,8 @@ export default function App() {
     downloadJson({ nodes, edges, board: selectedBoard }, 'my-logic-project');
   };
 
-  // Function to load project data (reusable)
-  const loadProjectData = (data: any) => {
+  // Wrap your loadProjectData function with useCallback
+  const loadProjectData = useCallback((data: any) => {
     // Reset ID counter based on loaded nodes
     resetIdCounter(data.nodes);
 
@@ -446,7 +446,12 @@ export default function App() {
     setNodes(updatedNodes);
     setEdges(data.edges);
     if (data.board) setSelectedBoard(data.board);
-  };
+  }, [selectedBoard, handlePinChange, handleInputsChange, handleInitialStateChange, handlePulseLengthChange, handleIntervalChange]);
+
+  // Then use it in your useEffect
+  useEffect(() => {
+    loadProjectData(defaultProject);
+  }, [loadProjectData]); // Now loadProjectData is properly included
 
   const handleUpload = () => {
     uploadJson((data) => {
@@ -475,9 +480,9 @@ export default function App() {
   };
 
   const getArduinoInoFile = async () => {
-      const githubUrl = 'https://raw.githubusercontent.com/MerzSebastian/OpenPLC/refs/heads/main/arduino/arduino.ino';
-      const response = await fetch(githubUrl);
-      return await response.text();
+    const githubUrl = 'https://raw.githubusercontent.com/MerzSebastian/OpenPLC/refs/heads/main/arduino/arduino.ino';
+    const response = await fetch(githubUrl);
+    return await response.text();
   }
 
   const copyArduinoCode = async () => {
@@ -535,7 +540,7 @@ export default function App() {
       // Create message with structure [START_BYTE][LENGTH][DATA...][CHECKSUM]
       const START_BYTE = 0x7E;
       const LENGTH = bytecode.length;
-      
+
       // Calculate checksum
       let checksum = 0;
       for (let i = 0; i < bytecode.length; i++) {
@@ -544,10 +549,10 @@ export default function App() {
 
       // Create message array
       const message = [START_BYTE, LENGTH, ...bytecode, checksum];
-      
+
       // Convert to Uint8Array
       const data = new Uint8Array(message);
-      
+
       // Write the data
       const writer = port.writable.getWriter();
       await writer.write(data);
@@ -559,7 +564,7 @@ export default function App() {
       let response = '';
 
       // Set a timeout for reading response
-      const timeoutPromise = new Promise((_, reject) => 
+      const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error('Timeout waiting for response')), 60000)
       );
 
@@ -568,7 +573,7 @@ export default function App() {
           while (true) {
             const { value, done } = await reader.read();
             if (done) break;
-            
+
             response += new TextDecoder().decode(value);
             if (response.includes('SUCCESS') || response.includes('ERROR')) {
               responseReceived = true;
@@ -662,13 +667,12 @@ export default function App() {
           Copy Arduino Code
         </button>
         When you want to test on Wokwi.com you can use see the default project <a className='text-blue-700' href='https://wokwi.com/projects/441553408946374657'>here</a>
-        
+
         {uploadStatus && (
-          <div className={`mt-2 p-2 text-center text-sm rounded ${
-            uploadStatus.includes('success') || uploadStatus.includes('copied') || uploadStatus.includes('loaded') || uploadStatus.includes('reset')
-              ? 'bg-green-100 text-green-800' 
+          <div className={`mt-2 p-2 text-center text-sm rounded ${uploadStatus.includes('success') || uploadStatus.includes('copied') || uploadStatus.includes('loaded') || uploadStatus.includes('reset')
+              ? 'bg-green-100 text-green-800'
               : 'bg-red-100 text-red-800'
-          }`}>
+            }`}>
             {uploadStatus}
           </div>
         )}
