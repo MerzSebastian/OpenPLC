@@ -16,6 +16,7 @@
 #define OP_LATCH 16
 #define OP_PULSE 17
 #define OP_TOGGLE 18
+#define OP_ANALOG_RANGE 19
 
 const int MAX_INSTRUCTIONS = 300;
 const int MAX_VARIABLES = 60;
