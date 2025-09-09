@@ -79,23 +79,10 @@ function LatchNode({ data, id }: any) {
 }
 
 function AnalogNode({ data, id }: any) {
-  const pins = (boards as any)[data.selectedBoard]?.analog || [];
-
   return (
     <div className={`${nodeBaseClasses} w-40 bg-teal-500 border-2 border-teal-700`}>
       <div className={titleClasses}>ANALOG RANGE</div>
-      <select
-        value={data.pin || ''}
-        onChange={(e) => data.onChangePin(id, e.target.value)}
-        className={`${inputClasses} mt-1`}
-      >
-        <option value="">Select Pin</option>
-        {pins.map((p: any) => (
-          <option key={p.pin} value={p.pin}>
-            {p.label}
-          </option>
-        ))}
-      </select>
+      <Handle type="target" position={Position.Left} id="in" className={handleClasses} />
       <div className="flex space-x-1 mt-1">
         <input
           type="number"
@@ -754,7 +741,7 @@ export default function App() {
           }))}
           edges={edges.map(edge => {
             const sourceNode = nodes.find(n => n.id === edge.source);
-            const isAnalog = sourceNode?.type === 'analogNode';
+            const isAnalog = sourceNode?.type === 'inputNode'
             return {
               ...edge,
               style: {
