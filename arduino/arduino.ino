@@ -399,17 +399,18 @@ void executeInstructions() {
         break;
       }
       case OP_ANALOG_RANGE: {
-        byte pin = instructions[pc++];
+        byte inputVar = instructions[pc++];
         unsigned int min = instructions[pc++];
         min |= (instructions[pc++] << 8);
         unsigned int max = instructions[pc++];
         max |= (instructions[pc++] << 8);
         byte outputVar = instructions[pc++];
         
-        int value = analogRead(pin);
+        int value = variables[inputVar];
         variables[outputVar] = (value >= min && value <= max) ? 1 : 0;
         break;
       }
+    
     }
   }
 }
