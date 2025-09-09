@@ -406,7 +406,7 @@ export default function App() {
   const handlePinChange = useCallback((nodeId: string, pinValue: string) => {
     setNodes((nds) =>
       nds.map((n) =>
-        n.id === nodeId ? { ...n, data: { ...n.data, pin: pinValue ? parseInt(pinValue, 10) : undefined } } : n
+        n.id === nodeId ? { ...n, data: { ...n.data, pin: pinValue } } : n
       )
     );
   }, [setNodes]);
