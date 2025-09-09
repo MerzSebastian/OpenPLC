@@ -739,17 +739,7 @@ export default function App() {
               onChangeMax: n.type === 'analogNode' ? handleMaxChange : undefined,
             }
           }))}
-          edges={edges.map(edge => {
-            const sourceNode = nodes.find(n => n.id === edge.source);
-            const isAnalog = sourceNode?.type === 'inputNode'
-            return {
-              ...edge,
-              style: {
-                stroke: isAnalog ? '#0D9488' : '#000',
-                strokeWidth: 2,
-              },
-            };
-          })}
+          edges={edges}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
