@@ -13,7 +13,7 @@ A visual programming interface for Arduino controllers built with React and Reac
 Weekend project with occasional updates. This is my first React project, so best practices may not always be followed.
 
 things to keep in mind:
-- only connect 1 line to a input of a block. if you want to connect more use a or element beforehand. I dont got any autoamtion in there to do that automatically
+- only connect 1 line to a input of a block. if you want to connect more use a or element beforehand. I dont got any automation in there to do that automatically. will come
 
 ## Features
 
