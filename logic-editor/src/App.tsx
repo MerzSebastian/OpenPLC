@@ -525,7 +525,7 @@ export default function App() {
   };
 
   const getArduinoInoFile = async () => {
-    const githubUrl = 'https://raw.githubusercontent.com/MerzSebastian/OpenPLC/refs/heads/feature/analogNode/arduino/arduino.ino';
+    const githubUrl = 'https://raw.githubusercontent.com/MerzSebastian/OpenPLC/refs/heads/main/arduino/arduino.ino';
     const response = await fetch(githubUrl);
     return await response.text();
   }
