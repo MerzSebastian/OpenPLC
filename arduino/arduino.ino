@@ -50,14 +50,15 @@ int lastButtonState[MAX_VARIABLES] = {LOW};  // Store the last stable button sta
 // WebSerial message structure
 #define START_BYTE 0x7E
 
-// #define WOKWI // uncomment when using wokwi
+// For Wokwi simulation, do not change the next line, it will get replaced with regex
+// #define WOKWI
 
 void setup() {
   Serial.begin(9600);
   
   // Check if we should load from WebSerial or use fixed bytecode
 #ifdef WOKWI
-  // For Wokwi simulation, use fixed bytecode
+  // For Wokwi simulation, do not change the next line, it will get replaced with regex
   byte myBytecode[] = {1, 3, 1, 4, 1, 2, 2, 5, 1, 6, 3, 3, 0, 3, 4, 1, 3, 2, 2, 3, 6, 3, 17, 4, 100, 0, 232, 3, 18, 2, 5, 0, 16, 1, 3, 6, 0, 11, 4, 0, 6, 4, 5, 7, 4, 5, 7};
 
   instructionLength = sizeof(myBytecode) / sizeof(myBytecode[0]);
