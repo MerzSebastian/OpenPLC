@@ -1,4 +1,4 @@
-// Enhanced bytecode-gen.ts with Latch and Timer support
+// Enhanced bytecode-gen.ts with Analog Range support
 export const OP_SET_PIN_MODE_INPUT = 1;
 export const OP_SET_PIN_MODE_OUTPUT = 2;
 export const OP_READ_PIN = 3;
@@ -14,6 +14,7 @@ export const OP_XOR = 15;
 export const OP_LATCH = 16;
 export const OP_PULSE = 17;
 export const OP_TOGGLE = 18;
+export const OP_ANALOG_RANGE = 19;
 export const OP_DELAY = 30;
 
 // Types for the logic configuration
@@ -25,7 +26,9 @@ interface Position {
 interface NodeData {
   label: string;
   inputs?: number;
-  pin?: string;
+  pin?: number;
+  min?: number;
+  max?: number;
   initialState?: number;
   pulseLength?: number;
   interval?: number;
@@ -114,12 +117,12 @@ export function generateBytecode(config: LogicConfig): number[] {
 
   // Set pin modes for input and output nodes
   for (const node of nodes) {
-    if (node.type === 'inputNode' && node.data.pin) {
-      const pin = parseInt(node.data.pin, 10);
+    if (node.type === 'inputNode' && node.data.pin !== undefined) {
+      const pin = node.data.pin;
       instructions.push(OP_SET_PIN_MODE_INPUT);
       instructions.push(pin);
-    } else if (node.type === 'outputNode' && node.data.pin) {
-      const pin = parseInt(node.data.pin, 10);
+    } else if (node.type === 'outputNode' && node.data.pin !== undefined) {
+      const pin = node.data.pin;
       instructions.push(OP_SET_PIN_MODE_OUTPUT);
       instructions.push(pin);
     }
@@ -129,13 +132,13 @@ export function generateBytecode(config: LogicConfig): number[] {
   for (const nodeId of topologicalOrder) {
     const node = nodeDict[nodeId];
 
-    if (node.type === 'inputNode' && node.data.pin) {
-      const pin = parseInt(node.data.pin, 10);
+    if (node.type === 'inputNode' && node.data.pin !== undefined) {
+      const pin = node.data.pin;
       const varIndex = varIndexMap[nodeId];
       instructions.push(OP_READ_PIN);
       instructions.push(pin);
       instructions.push(varIndex);
-    } else if (node.type === 'outputNode' && node.data.pin) {
+    } else if (node.type === 'outputNode' && node.data.pin !== undefined) {
       // Find the source node connected to this output
       let sourceNodeId: string | null = null;
       for (const edge of edges) {
@@ -150,10 +153,23 @@ export function generateBytecode(config: LogicConfig): number[] {
         sourceVar = varIndexMap[sourceNodeId];
       }
 
-      const pin = parseInt(node.data.pin, 10);
+      const pin = node.data.pin;
       instructions.push(OP_WRITE_PIN);
       instructions.push(pin);
       instructions.push(sourceVar);
+    } else if (node.type === 'analogNode' && node.data.pin !== undefined) {
+      const pin = node.data.pin;
+      const min = node.data.min || 0;
+      const max = node.data.max || 1023;
+      const outputVar = varIndexMap[nodeId];
+
+      instructions.push(OP_ANALOG_RANGE);
+      instructions.push(pin);
+      instructions.push(min & 0xFF);
+      instructions.push((min >> 8) & 0xFF);
+      instructions.push(max & 0xFF);
+      instructions.push((max >> 8) & 0xFF);
+      instructions.push(outputVar);
     } else {
       // Logic gate node
       const gateType = node.type;

@@ -398,6 +398,18 @@ void executeInstructions() {
         variables[outputVar] = toggleState[outputVar];
         break;
       }
+      case OP_ANALOG_RANGE: {
+        byte pin = instructions[pc++];
+        unsigned int min = instructions[pc++];
+        min |= (instructions[pc++] << 8);
+        unsigned int max = instructions[pc++];
+        max |= (instructions[pc++] << 8);
+        byte outputVar = instructions[pc++];
+        
+        int value = analogRead(pin);
+        variables[outputVar] = (value >= min && value <= max) ? 1 : 0;
+        break;
+      }
     }
   }
 }
