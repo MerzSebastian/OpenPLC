@@ -223,8 +223,11 @@ function AndNode({ data, id }: any) {
 
 function OrNode({ data, id }: any) {
   const { inputs = 2 } = data;
+  const handleSpacing = 15;
+  const baseHeight = 50;
+  const dynamicHeight = baseHeight + (inputs - 3) * handleSpacing;
   return (
-    <div className={`${nodeBaseClasses} w-28 min-h-12 bg-purple-500 border-2 border-purple-700`}>
+    <div className={`${nodeBaseClasses} w-28 min-h-12 bg-purple-500 border-2 border-purple-700`} style={{ minHeight: dynamicHeight }}>
       <div className={titleClasses}>OR</div>
       {Array.from({ length: inputs }).map((_, idx) => (
         <Handle
