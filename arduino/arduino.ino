@@ -65,22 +65,9 @@ void setup() {
   for (int i = 0; i < instructionLength; i++) {
     instructions[i] = myBytecode[i];
   }
-
-  Serial.print("Loaded ");
-  Serial.print(instructionLength);
-  Serial.println(" instructions for Wokwi simulation");
 #else
   // For real Arduino, try to load from EEPROM first
   loadFromEEPROM();
-  
-  // If no valid program in EEPROM, wait for WebSerial transmission
-  if (instructionLength == 0) {
-    Serial.println("READY");
-  } else {
-    Serial.print("Loaded ");
-    Serial.print(instructionLength);
-    Serial.println(" instructions from EEPROM");
-  }
 #endif
 }
 
