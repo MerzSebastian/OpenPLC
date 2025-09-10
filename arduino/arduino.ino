@@ -16,6 +16,7 @@
 #define OP_LATCH 16
 #define OP_PULSE 17
 #define OP_TOGGLE 18
+#define OP_ANALOG_RANGE 19
 
 const int MAX_INSTRUCTIONS = 300;
 const int MAX_VARIABLES = 60;
@@ -49,36 +50,24 @@ int lastButtonState[MAX_VARIABLES] = {LOW};  // Store the last stable button sta
 // WebSerial message structure
 #define START_BYTE 0x7E
 
-// #define WOKWI // uncomment when using wokwi
+// For Wokwi simulation, do not change the next line, it will get replaced with regex
+// #define WOKWI
 
 void setup() {
   Serial.begin(9600);
   
   // Check if we should load from WebSerial or use fixed bytecode
 #ifdef WOKWI
-  // For Wokwi simulation, use fixed bytecode
+  // For Wokwi simulation, do not change the next line, it will get replaced with regex
   byte myBytecode[] = {1, 3, 1, 4, 1, 2, 2, 5, 1, 6, 3, 3, 0, 3, 4, 1, 3, 2, 2, 3, 6, 3, 17, 4, 100, 0, 232, 3, 18, 2, 5, 0, 16, 1, 3, 6, 0, 11, 4, 0, 6, 4, 5, 7, 4, 5, 7};
 
   instructionLength = sizeof(myBytecode) / sizeof(myBytecode[0]);
   for (int i = 0; i < instructionLength; i++) {
     instructions[i] = myBytecode[i];
   }
-
-  Serial.print("Loaded ");
-  Serial.print(instructionLength);
-  Serial.println(" instructions for Wokwi simulation");
 #else
   // For real Arduino, try to load from EEPROM first
   loadFromEEPROM();
-  
-  // If no valid program in EEPROM, wait for WebSerial transmission
-  if (instructionLength == 0) {
-    Serial.println("READY");
-  } else {
-    Serial.print("Loaded ");
-    Serial.print(instructionLength);
-    Serial.println(" instructions from EEPROM");
-  }
 #endif
 }
 
@@ -398,6 +387,19 @@ void executeInstructions() {
         variables[outputVar] = toggleState[outputVar];
         break;
       }
+      case OP_ANALOG_RANGE: {
+        byte inputVar = instructions[pc++];
+        unsigned int min = instructions[pc++];
+        min |= (instructions[pc++] << 8);
+        unsigned int max = instructions[pc++];
+        max |= (instructions[pc++] << 8);
+        byte outputVar = instructions[pc++];
+        
+        int value = variables[inputVar];
+        variables[outputVar] = (value >= min && value <= max) ? 1 : 0;
+        break;
+      }
+    
     }
   }
 }

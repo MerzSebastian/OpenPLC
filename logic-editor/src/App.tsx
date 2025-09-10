@@ -50,6 +50,7 @@ const blockTypes = [
   { type: 'latchNode', label: 'LATCH', color: 'bg-orange-500' },
   { type: 'pulseNode', label: 'PULSE (beta)', color: 'bg-cyan-500' },
   { type: 'toggleNode', label: 'TOGGLE', color: 'bg-pink-500' },
+  { type: 'analogRangeNode', label: 'ANALOG RANGE', color: 'bg-teal-500' },
 ];
 
 // === Node Definitions ===
@@ -73,6 +74,36 @@ function LatchNode({ data, id }: any) {
           <option value={1}>HIGH</option>
         </select>
       </div>
+    </div>
+  );
+}
+
+function AnalogRangeNode({ data, id }: any) {
+  return (
+    <div className={`${nodeBaseClasses} w-40 bg-teal-500 border-2 border-teal-700`}>
+      <div className={titleClasses}>ANALOG RANGE</div>
+      <Handle type="target" position={Position.Left} id="in" className={handleClasses} />
+      <div className="flex space-x-1 mt-1">
+        <input
+          type="number"
+          min="0"
+          max="1023"
+          value={data.min || 0}
+          onChange={(e) => data.onChangeMin(id, parseInt(e.target.value))}
+          className={`${inputClasses} w-16`}
+          placeholder="Min"
+        />
+        <input
+          type="number"
+          min="0"
+          max="1023"
+          value={data.max || 1023}
+          onChange={(e) => data.onChangeMax(id, parseInt(e.target.value))}
+          className={`${inputClasses} w-16`}
+          placeholder="Max"
+        />
+      </div>
+      <Handle type="source" position={Position.Right} id="out" className={handleClasses} />
     </div>
   );
 }
@@ -315,7 +346,24 @@ export default function App() {
     latchNode: LatchNode,
     pulseNode: PulseNode,
     toggleNode: ToggleNode,
+    analogRangeNode: AnalogRangeNode,
   }), []);
+
+  const handleMinChange = useCallback((nodeId: string, min: number) => {
+    setNodes((nds) =>
+      nds.map((n) =>
+        n.id === nodeId ? { ...n, data: { ...n.data, min } } : n
+      )
+    );
+  }, [setNodes]);
+
+  const handleMaxChange = useCallback((nodeId: string, max: number) => {
+    setNodes((nds) =>
+      nds.map((n) =>
+        n.id === nodeId ? { ...n, data: { ...n.data, max } } : n
+      )
+    );
+  }, [setNodes]);
 
   const handleInitialStateChange = useCallback((nodeId: string, initialState: number) => {
     setNodes((nds) =>
@@ -687,6 +735,8 @@ export default function App() {
               onChangeInitialState: n.type === 'latchNode' || n.type === 'toggleNode' ? handleInitialStateChange : undefined,
               onChangePulseLength: n.type === 'pulseNode' ? handlePulseLengthChange : undefined,
               onChangeInterval: n.type === 'pulseNode' ? handleIntervalChange : undefined,
+              onChangeMin: n.type === 'analogRangeNode' ? handleMinChange : undefined,
+              onChangeMax: n.type === 'analogRangeNode' ? handleMaxChange : undefined,
             }
           }))}
           edges={edges}
