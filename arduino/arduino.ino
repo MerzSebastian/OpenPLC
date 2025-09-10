@@ -17,6 +17,13 @@
 #define OP_PULSE 17
 #define OP_TOGGLE 18
 #define OP_ANALOG_RANGE 19
+#define OP_ANALOG_COMPARE_GT 20
+#define OP_ANALOG_COMPARE_GE 21
+#define OP_ANALOG_COMPARE_LT 22
+#define OP_ANALOG_COMPARE_LE 23
+#define OP_ANALOG_COMPARE_EQ 24
+#define OP_ANALOG_COMPARE_NE 25
+#define OP_SHIFT_REGISTER 26
 
 const int MAX_INSTRUCTIONS = 300;
 const int MAX_VARIABLES = 60;
@@ -399,7 +406,93 @@ void executeInstructions() {
         variables[outputVar] = (value >= min && value <= max) ? 1 : 0;
         break;
       }
-    
+      case OP_ANALOG_COMPARE_GT: {
+        byte aVar = instructions[pc++];
+        byte bVar = instructions[pc++];
+        byte outputVar = instructions[pc++];
+        variables[outputVar] = variables[aVar] > variables[bVar];
+        break;
+      }
+      case OP_ANALOG_COMPARE_GE: {
+        byte aVar = instructions[pc++];
+        byte bVar = instructions[pc++];
+        byte outputVar = instructions[pc++];
+        variables[outputVar] = variables[aVar] >= variables[bVar];
+        break;
+      }
+      case OP_ANALOG_COMPARE_LT: {
+        byte aVar = instructions[pc++];
+        byte bVar = instructions[pc++];
+        byte outputVar = instructions[pc++];
+        variables[outputVar] = variables[aVar] < variables[bVar];
+        break;
+      }
+      case OP_ANALOG_COMPARE_LE: {
+        byte aVar = instructions[pc++];
+        byte bVar = instructions[pc++];
+        byte outputVar = instructions[pc++];
+        variables[outputVar] = variables[aVar] <= variables[bVar];
+        break;
+      }
+      case OP_ANALOG_COMPARE_EQ: {
+        byte aVar = instructions[pc++];
+        byte bVar = instructions[pc++];
+        byte outputVar = instructions[pc++];
+        variables[outputVar] = variables[aVar] == variables[bVar];
+        break;
+      }
+      case OP_ANALOG_COMPARE_NE: {
+        byte aVar = instructions[pc++];
+        byte bVar = instructions[pc++];
+        byte outputVar = instructions[pc++];
+        variables[outputVar] = variables[aVar] != variables[bVar];
+        break;
+      }
+      case OP_SHIFT_REGISTER: {
+        byte dataVar = instructions[pc++];
+        byte clockVar = instructions[pc++];
+        byte resetVar = instructions[pc++];
+        byte numOutputs = instructions[pc++];
+        byte initialOutput = instructions[pc++];
+        byte baseOutputVar = instructions[pc++];
+        
+        static bool shiftRegisterInitialized[MAX_VARIABLES] = {false};
+        static byte shiftRegisterState[MAX_VARIABLES] = {0};
+        
+        // Initialize on first run
+        if (!shiftRegisterInitialized[baseOutputVar]) {
+          shiftRegisterState[baseOutputVar] = 1 << initialOutput;
+          shiftRegisterInitialized[baseOutputVar] = true;
+        }
+        
+        // Reset logic
+        if (variables[resetVar]) {
+          shiftRegisterState[baseOutputVar] = 1 << initialOutput;
+        }
+        
+        // Clock rising edge detection
+        static bool prevClockState[MAX_VARIABLES] = {false};
+        if (variables[clockVar] && !prevClockState[baseOutputVar]) {
+          // Shift the register
+          if (variables[dataVar]) {
+            shiftRegisterState[baseOutputVar] = (shiftRegisterState[baseOutputVar] << 1) | 0x01;
+          } else {
+            shiftRegisterState[baseOutputVar] = shiftRegisterState[baseOutputVar] << 1;
+          }
+          
+          // Handle wrap-around
+          if (shiftRegisterState[baseOutputVar] >= (1 << numOutputs)) {
+            shiftRegisterState[baseOutputVar] = 1;
+          }
+        }
+        prevClockState[baseOutputVar] = variables[clockVar];
+        
+        // Set output variables
+        for (byte i = 0; i < numOutputs; i++) {
+          variables[baseOutputVar + i] = (shiftRegisterState[baseOutputVar] >> i) & 0x01;
+        }
+        break;
+      }
     }
   }
 }
