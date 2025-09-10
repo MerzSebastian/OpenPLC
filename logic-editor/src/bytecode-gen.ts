@@ -1,4 +1,4 @@
-// Enhanced bytecode-gen.ts with Analog Range support
+// Enhanced bytecode-gen.ts with automatic OR node insertion
 export const OP_SET_PIN_MODE_INPUT = 1;
 export const OP_SET_PIN_MODE_OUTPUT = 2;
 export const OP_READ_PIN = 3;
@@ -60,9 +60,102 @@ interface LogicConfig {
   board: string;
 }
 
+function autoInsertORNodes(config: LogicConfig): LogicConfig {
+  const { nodes, edges, board } = config;
+  const newNodes = [...nodes];
+  let newEdges = [...edges];
+
+  // Build a map of target nodes to their incoming edges
+  const targetNodeMap: Record<string, Edge[]> = {};
+
+  for (const edge of newEdges) {
+    if (!targetNodeMap[edge.target]) {
+      targetNodeMap[edge.target] = [];
+    }
+    targetNodeMap[edge.target].push(edge);
+  }
+
+  // Find nodes with multiple inputs
+  const nodesNeedingOR: {nodeId: string, edges: Edge[]}[] = [];
+
+  for (const nodeId in targetNodeMap) {
+    const edges = targetNodeMap[nodeId];
+    const targetNode = newNodes.find(n => n.id === nodeId);
+    if (!targetNode) continue;
+
+    // For outputNode, consider all inputs regardless of handle
+    if (targetNode.type === 'outputNode' && edges.length > 1) {
+      const sortedEdges = [...edges].sort((a, b) => a.source.localeCompare(b.source));
+      nodesNeedingOR.push({nodeId, edges: sortedEdges});
+    } else {
+      // For other nodes, check per handle
+      const targetHandleMap: Record<string, Edge[]> = {};
+      for (const edge of edges) {
+        if (!targetHandleMap[edge.targetHandle]) {
+          targetHandleMap[edge.targetHandle] = [];
+        }
+        targetHandleMap[edge.targetHandle].push(edge);
+      }
+      for (const handle in targetHandleMap) {
+        const handleEdges = targetHandleMap[handle];
+        if (handleEdges.length > 1) {
+          const sortedEdges = [...handleEdges].sort((a, b) => a.source.localeCompare(b.source));
+          nodesNeedingOR.push({nodeId, edges: sortedEdges});
+        }
+      }
+    }
+  }
+
+  // Insert OR nodes for nodes with multiple inputs
+  for (const {nodeId, edges} of nodesNeedingOR) {
+    const targetNode = newNodes.find(n => n.id === nodeId);
+    if (!targetNode) continue;
+
+    // Create a new OR node
+    const orNodeId = `auto_or_${nodeId}`;
+    const orNode: Node = {
+      id: orNodeId,
+      type: 'orNode',
+      data: { inputs: edges.length },
+      position: { x: 0, y: 0 }
+    } as Node;
+
+    // Add the OR node
+    newNodes.push(orNode);
+
+    // Remove the original edges
+    newEdges = newEdges.filter(e => !edges.includes(e));
+
+    // Add edges from sources to OR node (in sorted order)
+    for (let i = 0; i < edges.length; i++) {
+      const edge = edges[i];
+      newEdges.push({
+        source: edge.source,
+        sourceHandle: edge.sourceHandle,
+        target: orNodeId,
+        targetHandle: `in${i}`,
+        id: `auto_edge_${edge.source}_to_${orNodeId}_in${i}`
+      });
+    }
+
+    // Add edge from OR node to target node
+    newEdges.push({
+      source: orNodeId,
+      sourceHandle: 'out',
+      target: nodeId,
+      targetHandle: 'in', // Use a single input handle for outputNode
+      id: `auto_edge_${orNodeId}_to_${nodeId}_in`
+    });
+  }
+
+  return { nodes: newNodes, edges: newEdges, board };
+}
+
 // Function to generate bytecode with dynamic input handling
 export function generateBytecode(config: LogicConfig): number[] {
-  const { nodes, edges } = config;
+  // First, automatically insert OR nodes for multiple inputs
+  const processedConfig = autoInsertORNodes(config);
+  const { nodes, edges } = processedConfig;
   const instructions: number[] = [];
 
   // Build graph

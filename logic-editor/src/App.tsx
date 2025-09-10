@@ -45,7 +45,7 @@ const blockTypes = [
   { type: 'inputNode', label: 'INPUT', color: 'bg-green-500' },
   { type: 'outputNode', label: 'OUTPUT', color: 'bg-red-500' },
   { type: 'andNode', label: 'AND', color: 'bg-blue-500' },
-  { type: 'orNode', label: 'OR', color: 'bg-purple-500' },
+  // { type: 'orNode', label: 'OR', color: 'bg-purple-500' },
   { type: 'notNode', label: 'NOT', color: 'bg-yellow-500' },
   { type: 'latchNode', label: 'LATCH', color: 'bg-orange-500' },
   { type: 'pulseNode', label: 'PULSE (beta)', color: 'bg-cyan-500' },
