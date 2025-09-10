@@ -50,7 +50,7 @@ const blockTypes = [
   { type: 'latchNode', label: 'LATCH', color: 'bg-orange-500' },
   { type: 'pulseNode', label: 'PULSE (beta)', color: 'bg-cyan-500' },
   { type: 'toggleNode', label: 'TOGGLE', color: 'bg-pink-500' },
-  { type: 'analogNode', label: 'ANALOG RANGE', color: 'bg-teal-500' },
+  { type: 'analogRangeNode', label: 'ANALOG RANGE', color: 'bg-teal-500' },
 ];
 
 // === Node Definitions ===
@@ -78,7 +78,7 @@ function LatchNode({ data, id }: any) {
   );
 }
 
-function AnalogNode({ data, id }: any) {
+function AnalogRangeNode({ data, id }: any) {
   return (
     <div className={`${nodeBaseClasses} w-40 bg-teal-500 border-2 border-teal-700`}>
       <div className={titleClasses}>ANALOG RANGE</div>
@@ -346,7 +346,7 @@ export default function App() {
     latchNode: LatchNode,
     pulseNode: PulseNode,
     toggleNode: ToggleNode,
-    analogNode: AnalogNode,
+    analogRangeNode: AnalogRangeNode,
   }), []);
 
   const handleMinChange = useCallback((nodeId: string, min: number) => {
@@ -735,8 +735,8 @@ export default function App() {
               onChangeInitialState: n.type === 'latchNode' || n.type === 'toggleNode' ? handleInitialStateChange : undefined,
               onChangePulseLength: n.type === 'pulseNode' ? handlePulseLengthChange : undefined,
               onChangeInterval: n.type === 'pulseNode' ? handleIntervalChange : undefined,
-              onChangeMin: n.type === 'analogNode' ? handleMinChange : undefined,
-              onChangeMax: n.type === 'analogNode' ? handleMaxChange : undefined,
+              onChangeMin: n.type === 'analogRangeNode' ? handleMinChange : undefined,
+              onChangeMax: n.type === 'analogRangeNode' ? handleMaxChange : undefined,
             }
           }))}
           edges={edges}

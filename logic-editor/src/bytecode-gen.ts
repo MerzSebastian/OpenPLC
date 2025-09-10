@@ -95,7 +95,7 @@ export function generateBytecode(config: LogicConfig): number[] {
         visited.add(nodeId);
         
         const currentNode = nodeDict[nodeId];
-        if (currentNode.type === 'analogNode') return true;
+        if (currentNode.type === 'analogRangeNode') return true;
         
         for (const neighbor of graph[nodeId]) {
           if (checkConnectedToAnalog(neighbor, visited)) return true;
@@ -187,7 +187,7 @@ export function generateBytecode(config: LogicConfig): number[] {
       instructions.push(OP_WRITE_PIN);
       instructions.push(pin);
       instructions.push(sourceVar);
-    } else if (node.type === 'analogNode') {
+    } else if (node.type === 'analogRangeNode') {
       // Handle analog range node
       const inputVars: number[] = [];
       for (const edge of edges) {
