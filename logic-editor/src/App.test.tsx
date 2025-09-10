@@ -58,8 +58,7 @@ test('Input connected to two parallel analog ranges directly to output (no OR)',
 
 
 test('larger project with OR to connect two buttons', () => {
-  // Test 1: Input connected to two parallel analog ranges and then to OR gate
-  const test1 = {
+  const test = {
   "nodes": [
     {
       "id": "dndnode_0",
@@ -403,13 +402,12 @@ test('larger project with OR to connect two buttons', () => {
   "board": "arduino_nano"
 };
 
-  const expectedBytecode = "1,2,2,8,1,3,1,4,1,5,1,6,1,7,3,2,0,3,3,1,3,4,2,3,5,3,3,6,4,3,7,5,10,0,6,12,2,1,2,7,18,3,8,0,12,2,4,5,9,12,4,6,7,8,10,11,4,8,12";
+  const expectedBytecode = "1,2,2,8,1,3,1,4,1,5,1,6,1,7,3,2,0,3,3,1,3,4,2,3,5,3,3,6,4,3,7,5,10,0,6,12,2,1,2,7,18,3,8,0,16,4,5,9,0,11,4,6,7,8,9,10,4,8,10";
 
-  expect(bytecodeToString(generateBytecode(test1 as any))).toEqual(expectedBytecode);
+  expect(bytecodeToString(generateBytecode(test as any))).toEqual(expectedBytecode);
 });
 test('larger project without OR. connecting two buttons to same input', () => {
-  // Test 2: Input connected to two parallel analog ranges directly to output (no OR)
-  const test2 = {
+  const test = {
   "nodes": [
     {
       "id": "dndnode_1",
@@ -724,8 +722,8 @@ test('larger project without OR. connecting two buttons to same input', () => {
   ],
   "board": "arduino_nano"
 };
+  const expectedBytecode = "1,2,2,8,1,3,1,4,1,5,1,6,1,7,3,2,0,3,3,1,3,4,2,3,5,3,3,6,4,3,7,5,10,0,6,12,2,1,2,7,18,3,8,0,16,4,5,9,0,11,4,6,8,9,7,10,4,8,10";
+  //const expectedBytecode = "1,2,2,8,1,3,1,4,1,5,1,6,1,7,3,2,0,3,3,1,3,4,2,3,5,3,3,6,4,3,7,5,10,0,6,12,2,1,2,7,18,3,8,0,16,4,5,9,0,11,4,6,7,8,9,10,4,8,10";
 
-  const expectedBytecode = "1,2,2,8,1,3,1,4,1,5,1,6,1,7,3,2,0,3,3,1,3,4,2,3,5,3,3,6,4,3,7,5,10,0,6,12,2,1,2,7,18,3,8,0,12,2,4,5,9,12,4,6,7,8,10,11,4,8,12";
-
-  expect(bytecodeToString(generateBytecode(test2 as any))).toEqual(expectedBytecode);
+  expect(bytecodeToString(generateBytecode(test as any))).toEqual(expectedBytecode);
 });

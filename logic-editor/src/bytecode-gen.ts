@@ -60,41 +60,109 @@ interface LogicConfig {
   board: string;
 }
 
-// Function to automatically insert OR nodes for multiple inputs
 function autoInsertORNodes(config: LogicConfig): LogicConfig {
   const { nodes, edges, board } = config;
   const newNodes = [...nodes];
   let newEdges = [...edges];
   
-  // Find all nodes with multiple inputs (except OR nodes themselves)
-  const nodesWithMultipleInputs = newNodes.filter(node => {
-    if (node.type === 'orNode' || node.type === 'inputNode') return false;
+  // First, handle output nodes separately
+  const outputNodes = newNodes.filter(node => node.type === 'outputNode');
+  for (const outputNode of outputNodes) {
+    const inputEdges = newEdges.filter(edge => edge.target === outputNode.id);
     
-    const inputEdges = newEdges.filter(edge => edge.target === node.id);
-    return inputEdges.length > 1;
-  });
+    if (inputEdges.length > 1) {
+      // Create a new OR node for the output
+      const orNodeId = `auto_or_output_${outputNode.id}`;
+      const orNode: Node = {
+        id: orNodeId,
+        type: 'orNode',
+        data: { inputs: inputEdges.length }
+      } as Node;
+      
+      // Add the OR node
+      newNodes.push(orNode);
+      
+      // Remove all edges to the output node
+      newEdges = newEdges.filter(edge => edge.target !== outputNode.id);
+      
+      // Add edges from sources to OR node (sorted by source ID for consistency)
+      const sortedEdges = [...inputEdges].sort((a, b) => a.source.localeCompare(b.source));
+      for (let i = 0; i < sortedEdges.length; i++) {
+        const edge = sortedEdges[i];
+        newEdges.push({
+          source: edge.source,
+          sourceHandle: edge.sourceHandle,
+          target: orNodeId,
+          targetHandle: `in${i}`,
+          id: `auto_edge_${edge.source}_to_${orNodeId}_in${i}`
+        });
+      }
+      
+      // Add edge from OR node to output node
+      newEdges.push({
+        source: orNodeId,
+        sourceHandle: 'out',
+        target: outputNode.id,
+        targetHandle: 'in',
+        id: `auto_edge_${orNodeId}_to_${outputNode.id}`
+      });
+    }
+  }
   
-  // For each node with multiple inputs, insert an OR node
-  for (const node of nodesWithMultipleInputs) {
-    const inputEdges = newEdges.filter(edge => edge.target === node.id);
+  // Then handle other nodes with multiple inputs on the same handle
+  const targetHandleMap: Record<string, Record<string, Edge[]>> = {};
+  
+  for (const edge of newEdges) {
+    if (!targetHandleMap[edge.target]) {
+      targetHandleMap[edge.target] = {};
+    }
+    
+    if (!targetHandleMap[edge.target][edge.targetHandle]) {
+      targetHandleMap[edge.target][edge.targetHandle] = [];
+    }
+    
+    targetHandleMap[edge.target][edge.targetHandle].push(edge);
+  }
+  
+  // Find handles with multiple inputs
+  const handlesNeedingOR: {nodeId: string, handle: string, edges: Edge[]}[] = [];
+  
+  for (const nodeId in targetHandleMap) {
+    const targetNode = newNodes.find(n => n.id === nodeId);
+    if (targetNode && targetNode.type === 'orNode') continue;
+    
+    for (const handle in targetHandleMap[nodeId]) {
+      const edges = targetHandleMap[nodeId][handle];
+      if (edges.length > 1) {
+        // Sort edges by source ID to ensure consistent order
+        const sortedEdges = [...edges].sort((a, b) => a.source.localeCompare(b.source));
+        handlesNeedingOR.push({nodeId, handle, edges: sortedEdges});
+      }
+    }
+  }
+  
+  // Insert OR nodes for handles with multiple inputs
+  for (const {nodeId, handle, edges} of handlesNeedingOR) {
+    const targetNode = newNodes.find(n => n.id === nodeId);
+    if (!targetNode) continue;
     
     // Create a new OR node
-    const orNodeId = `auto_or_${node.id}`;
+    const orNodeId = `auto_or_${nodeId}_${handle}`;
     const orNode: Node = {
       id: orNodeId,
       type: 'orNode',
-      data: { inputs: inputEdges.length, label: "orNode" }
+      data: { inputs: edges.length }
     } as Node;
     
     // Add the OR node
     newNodes.push(orNode);
     
-    // Remove all edges to the original node
-    newEdges = newEdges.filter(edge => edge.target !== node.id);
+    // Remove the original edges
+    newEdges = newEdges.filter(e => !edges.includes(e));
     
-    // Add edges from sources to OR node
-    for (let i = 0; i < inputEdges.length; i++) {
-      const edge = inputEdges[i];
+    // Add edges from sources to OR node (in sorted order)
+    for (let i = 0; i < edges.length; i++) {
+      const edge = edges[i];
       newEdges.push({
         source: edge.source,
         sourceHandle: edge.sourceHandle,
@@ -104,13 +172,13 @@ function autoInsertORNodes(config: LogicConfig): LogicConfig {
       });
     }
     
-    // Add edge from OR node to original node
+    // Add edge from OR node to target node
     newEdges.push({
       source: orNodeId,
       sourceHandle: 'out',
-      target: node.id,
-      targetHandle: 'in',
-      id: `auto_edge_${orNodeId}_to_${node.id}`
+      target: nodeId,
+      targetHandle: handle,
+      id: `auto_edge_${orNodeId}_to_${nodeId}_${handle}`
     });
   }
   
