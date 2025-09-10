@@ -410,42 +410,44 @@ void executeInstructions() {
         byte aVar = instructions[pc++];
         byte bVar = instructions[pc++];
         byte outputVar = instructions[pc++];
-        variables[outputVar] = variables[aVar] > variables[bVar];
+        variables[outputVar] = (variables[aVar] > variables[bVar]) ? 1 : 0;
         break;
       }
       case OP_ANALOG_COMPARE_GE: {
         byte aVar = instructions[pc++];
         byte bVar = instructions[pc++];
         byte outputVar = instructions[pc++];
-        variables[outputVar] = variables[aVar] >= variables[bVar];
+        variables[outputVar] = (variables[aVar] >= variables[bVar]) ? 1 : 0;
         break;
       }
       case OP_ANALOG_COMPARE_LT: {
         byte aVar = instructions[pc++];
         byte bVar = instructions[pc++];
         byte outputVar = instructions[pc++];
-        variables[outputVar] = variables[aVar] < variables[bVar];
+        variables[outputVar] = (variables[aVar] < variables[bVar]) ? 1 : 0;
         break;
       }
       case OP_ANALOG_COMPARE_LE: {
         byte aVar = instructions[pc++];
         byte bVar = instructions[pc++];
         byte outputVar = instructions[pc++];
-        variables[outputVar] = variables[aVar] <= variables[bVar];
+        variables[outputVar] = (variables[aVar] <= variables[bVar]) ? 1 : 0;
         break;
       }
       case OP_ANALOG_COMPARE_EQ: {
         byte aVar = instructions[pc++];
         byte bVar = instructions[pc++];
         byte outputVar = instructions[pc++];
-        variables[outputVar] = variables[aVar] == variables[bVar];
+        // Add a small tolerance for analog value comparisons
+        variables[outputVar] = (abs(variables[aVar] - variables[bVar]) < 5) ? 1 : 0;
         break;
       }
       case OP_ANALOG_COMPARE_NE: {
         byte aVar = instructions[pc++];
         byte bVar = instructions[pc++];
         byte outputVar = instructions[pc++];
-        variables[outputVar] = variables[aVar] != variables[bVar];
+        // Add a small tolerance for analog value comparisons
+        variables[outputVar] = (abs(variables[aVar] - variables[bVar]) >= 5) ? 1 : 0;
         break;
       }
       case OP_SHIFT_REGISTER: {
@@ -493,6 +495,7 @@ void executeInstructions() {
         }
         break;
       }
+    
     }
   }
 }
