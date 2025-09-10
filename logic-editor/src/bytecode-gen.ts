@@ -105,7 +105,6 @@ export function generateBytecode(config: LogicConfig): number[] {
       };
       
       inputUsesAnalog[node.id] = checkConnectedToAnalog(node.id);
-      console.log(`Input node ${node.id} uses analog: ${inputUsesAnalog[node.id]}`);
     }
   }
 
@@ -164,10 +163,8 @@ export function generateBytecode(config: LogicConfig): number[] {
       // Use analog read if connected to an analog node
       if (inputUsesAnalog[nodeId]) {
         instructions.push(OP_READ_ANALOG_PIN);
-        console.log(`Using OP_READ_ANALOG_PIN for input node ${nodeId}`);
       } else {
         instructions.push(OP_READ_PIN);
-        console.log(`Using OP_READ_PIN for input node ${nodeId}`);
       }
       instructions.push(pin);
       instructions.push(varIndex);
