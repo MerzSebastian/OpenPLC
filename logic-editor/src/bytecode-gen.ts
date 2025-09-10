@@ -65,7 +65,7 @@ export function generateBytecode(config: LogicConfig): number[] {
   const { nodes, edges } = config;
   const instructions: number[] = [];
 
-  // Build graph and in-degree map
+  // Build graph
   const graph: Record<string, string[]> = {};
   const inDegree: Record<string, number> = {};
   const nodeDict: Record<string, Node> = {};
@@ -82,6 +82,31 @@ export function generateBytecode(config: LogicConfig): number[] {
     const target = edge.target;
     graph[source].push(target);
     inDegree[target] += 1;
+  }
+
+  // Simple check: if an input node is connected to an analog node
+  const inputUsesAnalog: Record<string, boolean> = {};
+  
+  for (const node of nodes) {
+    if (node.type === 'inputNode') {
+      // Check if this input is connected to any analog node
+      const checkConnectedToAnalog = (nodeId: string, visited: Set<string> = new Set()): boolean => {
+        if (visited.has(nodeId)) return false;
+        visited.add(nodeId);
+        
+        const currentNode = nodeDict[nodeId];
+        if (currentNode.type === 'analogNode') return true;
+        
+        for (const neighbor of graph[nodeId]) {
+          if (checkConnectedToAnalog(neighbor, visited)) return true;
+        }
+        
+        return false;
+      };
+      
+      inputUsesAnalog[node.id] = checkConnectedToAnalog(node.id);
+      console.log(`Input node ${node.id} uses analog: ${inputUsesAnalog[node.id]}`);
+    }
   }
 
   // Topological sort
@@ -136,18 +161,16 @@ export function generateBytecode(config: LogicConfig): number[] {
       const pin = parseInt(node.data.pin, 10);
       const varIndex = varIndexMap[nodeId];
       
-      // Check if it's an analog pin
-      const isAnalogPin = pin >= 14; // Assuming analog pins start at 14
-      
-      if (isAnalogPin) {
+      // Use analog read if connected to an analog node
+      if (inputUsesAnalog[nodeId]) {
         instructions.push(OP_READ_ANALOG_PIN);
-        instructions.push(pin);
-        instructions.push(varIndex);
+        console.log(`Using OP_READ_ANALOG_PIN for input node ${nodeId}`);
       } else {
         instructions.push(OP_READ_PIN);
-        instructions.push(pin);
-        instructions.push(varIndex);
+        console.log(`Using OP_READ_PIN for input node ${nodeId}`);
       }
+      instructions.push(pin);
+      instructions.push(varIndex);
     } else if (node.type === 'outputNode' && node.data.pin) {
       // Find the source node connected to this output
       let sourceNodeId: string | null = null;
@@ -167,6 +190,30 @@ export function generateBytecode(config: LogicConfig): number[] {
       instructions.push(OP_WRITE_PIN);
       instructions.push(pin);
       instructions.push(sourceVar);
+    } else if (node.type === 'analogNode') {
+      // Handle analog range node
+      const inputVars: number[] = [];
+      for (const edge of edges) {
+        if (edge.target === nodeId) {
+          const sourceNodeId = edge.source;
+          if (varIndexMap[sourceNodeId] !== undefined) {
+            inputVars.push(varIndexMap[sourceNodeId]);
+          }
+        }
+      }
+
+      if (inputVars.length >= 1 && varIndexMap[nodeId] !== undefined) {
+        const min = node.data.min || 0;
+        const max = node.data.max || 1023;
+        
+        instructions.push(OP_ANALOG_RANGE);
+        instructions.push(inputVars[0]); // Input variable
+        instructions.push(min & 0xFF);   // Min value low byte
+        instructions.push((min >> 8) & 0xFF); // Min value high byte
+        instructions.push(max & 0xFF);   // Max value low byte
+        instructions.push((max >> 8) & 0xFF); // Max value high byte
+        instructions.push(varIndexMap[nodeId]); // Output variable
+      }
     } else {
       // Logic gate node
       const gateType = node.type;
