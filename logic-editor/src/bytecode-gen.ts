@@ -1,4 +1,4 @@
-// Enhanced bytecode-gen.ts with Analog Range support
+// Enhanced bytecode-gen.ts with automatic OR node insertion
 export const OP_SET_PIN_MODE_INPUT = 1;
 export const OP_SET_PIN_MODE_OUTPUT = 2;
 export const OP_READ_PIN = 3;
@@ -60,9 +60,68 @@ interface LogicConfig {
   board: string;
 }
 
+// Function to automatically insert OR nodes for multiple inputs
+function autoInsertORNodes(config: LogicConfig): LogicConfig {
+  const { nodes, edges, board } = config;
+  const newNodes = [...nodes];
+  let newEdges = [...edges];
+  
+  // Find all nodes with multiple inputs (except OR nodes themselves)
+  const nodesWithMultipleInputs = newNodes.filter(node => {
+    if (node.type === 'orNode' || node.type === 'inputNode') return false;
+    
+    const inputEdges = newEdges.filter(edge => edge.target === node.id);
+    return inputEdges.length > 1;
+  });
+  
+  // For each node with multiple inputs, insert an OR node
+  for (const node of nodesWithMultipleInputs) {
+    const inputEdges = newEdges.filter(edge => edge.target === node.id);
+    
+    // Create a new OR node
+    const orNodeId = `auto_or_${node.id}`;
+    const orNode: Node = {
+      id: orNodeId,
+      type: 'orNode',
+      data: { inputs: inputEdges.length, label: "orNode" }
+    } as Node;
+    
+    // Add the OR node
+    newNodes.push(orNode);
+    
+    // Remove all edges to the original node
+    newEdges = newEdges.filter(edge => edge.target !== node.id);
+    
+    // Add edges from sources to OR node
+    for (let i = 0; i < inputEdges.length; i++) {
+      const edge = inputEdges[i];
+      newEdges.push({
+        source: edge.source,
+        sourceHandle: edge.sourceHandle,
+        target: orNodeId,
+        targetHandle: `in${i}`,
+        id: `auto_edge_${edge.source}_to_${orNodeId}_in${i}`
+      });
+    }
+    
+    // Add edge from OR node to original node
+    newEdges.push({
+      source: orNodeId,
+      sourceHandle: 'out',
+      target: node.id,
+      targetHandle: 'in',
+      id: `auto_edge_${orNodeId}_to_${node.id}`
+    });
+  }
+  
+  return { nodes: newNodes, edges: newEdges, board };
+}
+
 // Function to generate bytecode with dynamic input handling
 export function generateBytecode(config: LogicConfig): number[] {
-  const { nodes, edges } = config;
+  // First, automatically insert OR nodes for multiple inputs
+  const processedConfig = autoInsertORNodes(config);
+  const { nodes, edges } = processedConfig;
   const instructions: number[] = [];
 
   // Build graph
