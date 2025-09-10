@@ -164,45 +164,9 @@ export function generateBytecode(config: LogicConfig): number[] {
       }
 
       const pin = parseInt(node.data.pin, 10);
-      
-      // Check if it's an analog pin
-      const isAnalogPin = pin >= 14; // Assuming analog pins start at 14
-      
-      if (isAnalogPin) {
-        instructions.push(OP_WRITE_ANALOG_PIN);
-        instructions.push(pin);
-        instructions.push(sourceVar);
-      } else {
-        instructions.push(OP_WRITE_PIN);
-        instructions.push(pin);
-        instructions.push(sourceVar);
-      }
-    } else if (node.type === 'analogNode') {
-      // Find the input variable connected to this node
-      let inputVar = -1;
-      for (const edge of edges) {
-        if (edge.target === nodeId && edge.targetHandle === 'in') {
-          const sourceNodeId = edge.source;
-          if (varIndexMap[sourceNodeId] !== undefined) {
-            inputVar = varIndexMap[sourceNodeId];
-            break;
-          }
-        }
-      }
-
-      if (inputVar >= 0 && varIndexMap[nodeId] !== undefined) {
-        const min = node.data.min || 0;
-        const max = node.data.max || 1023;
-        const outputVar = varIndexMap[nodeId];
-
-        instructions.push(OP_ANALOG_RANGE);
-        instructions.push(inputVar);
-        instructions.push(min & 0xFF);
-        instructions.push((min >> 8) & 0xFF);
-        instructions.push(max & 0xFF);
-        instructions.push((max >> 8) & 0xFF);
-        instructions.push(outputVar);
-      }
+      instructions.push(OP_WRITE_PIN);
+      instructions.push(pin);
+      instructions.push(sourceVar);
     } else {
       // Logic gate node
       const gateType = node.type;
