@@ -17,6 +17,12 @@
 #define OP_PULSE 17
 #define OP_TOGGLE 18
 #define OP_ANALOG_RANGE 19
+#define OP_ANALOG_COMPARE_GT 20
+#define OP_ANALOG_COMPARE_GE 21
+#define OP_ANALOG_COMPARE_LT 22
+#define OP_ANALOG_COMPARE_LE 23
+#define OP_ANALOG_COMPARE_EQ 24
+#define OP_ANALOG_COMPARE_NE 25
 
 const int MAX_INSTRUCTIONS = 300;
 const int MAX_VARIABLES = 60;
@@ -399,7 +405,51 @@ void executeInstructions() {
         variables[outputVar] = (value >= min && value <= max) ? 1 : 0;
         break;
       }
-    
+      case OP_ANALOG_COMPARE_GT: {
+        byte aVar = instructions[pc++];
+        byte bVar = instructions[pc++];
+        byte outputVar = instructions[pc++];
+        variables[outputVar] = (variables[aVar] > variables[bVar]) ? 1 : 0;
+        break;
+      }
+      case OP_ANALOG_COMPARE_GE: {
+        byte aVar = instructions[pc++];
+        byte bVar = instructions[pc++];
+        byte outputVar = instructions[pc++];
+        variables[outputVar] = (variables[aVar] >= variables[bVar]) ? 1 : 0;
+        break;
+      }
+      case OP_ANALOG_COMPARE_LT: {
+        byte aVar = instructions[pc++];
+        byte bVar = instructions[pc++];
+        byte outputVar = instructions[pc++];
+        variables[outputVar] = (variables[aVar] < variables[bVar]) ? 1 : 0;
+        break;
+      }
+      case OP_ANALOG_COMPARE_LE: {
+        byte aVar = instructions[pc++];
+        byte bVar = instructions[pc++];
+        byte outputVar = instructions[pc++];
+        variables[outputVar] = (variables[aVar] <= variables[bVar]) ? 1 : 0;
+        break;
+      }
+      case OP_ANALOG_COMPARE_EQ: {
+        byte aVar = instructions[pc++];
+        byte bVar = instructions[pc++];
+        byte outputVar = instructions[pc++];
+        // Add a small tolerance for analog value comparisons
+        variables[outputVar] = (abs(variables[aVar] - variables[bVar]) < 5) ? 1 : 0;
+        break;
+      }
+      case OP_ANALOG_COMPARE_NE: {
+        byte aVar = instructions[pc++];
+        byte bVar = instructions[pc++];
+        byte outputVar = instructions[pc++];
+        // Add a small tolerance for analog value comparisons
+        variables[outputVar] = (abs(variables[aVar] - variables[bVar]) >= 5) ? 1 : 0;
+        break;
+      }
+
     }
   }
 }

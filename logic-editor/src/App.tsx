@@ -51,6 +51,7 @@ const blockTypes = [
   { type: 'pulseNode', label: 'PULSE (beta)', color: 'bg-cyan-500' },
   { type: 'toggleNode', label: 'TOGGLE', color: 'bg-pink-500' },
   { type: 'analogRangeNode', label: 'ANALOG RANGE', color: 'bg-teal-500' },
+  { type: 'analogComparerNode', label: 'ANALOG COMPARER', color: 'bg-indigo-500' },
 ];
 
 // === Node Definitions ===
@@ -103,6 +104,33 @@ function AnalogRangeNode({ data, id }: any) {
           placeholder="Max"
         />
       </div>
+      <Handle type="source" position={Position.Right} id="out" className={handleClasses} />
+    </div>
+  );
+}
+
+function AnalogComparerNode({ data, id }: any) {
+  return (
+    <div className={`${nodeBaseClasses} w-40 bg-indigo-500 border-2 border-indigo-700`}>
+      <div className={titleClasses}>ANALOG COMPARER</div>
+      <Handle type="target" position={Position.Left} id="a" className={handleClasses} style={{ top: '35%' }} />
+      <Handle type="target" position={Position.Left} id="b" className={handleClasses} style={{ top: '55%' }} />
+      <div className='absolute left-1 top-[35%] -mt-3 text-sm'>A</div>
+      <div className='absolute left-1 top-[55%] -mt-3 text-sm'>B</div>
+
+      <select
+        value={data.comparisonType || '>'}
+        onChange={(e) => data.onChangeComparisonType(id, e.target.value)}
+        className={`${inputClasses} mt-6 w-full`}
+      >
+        <option value=">">A &gt; B</option>
+        <option value=">=">A &gt;= B</option>
+        <option value="<">A &lt; B</option>
+        <option value="<=">A &lt;= B</option>
+        <option value="==">A == B</option>
+        <option value="!=">A != B</option>
+      </select>
+
       <Handle type="source" position={Position.Right} id="out" className={handleClasses} />
     </div>
   );
@@ -347,7 +375,16 @@ export default function App() {
     pulseNode: PulseNode,
     toggleNode: ToggleNode,
     analogRangeNode: AnalogRangeNode,
+    analogComparerNode: AnalogComparerNode,
   }), []);
+
+  const handleComparisonTypeChange = useCallback((nodeId: string, comparisonType: string) => {
+    setNodes((nds) =>
+      nds.map((n) =>
+        n.id === nodeId ? { ...n, data: { ...n.data, comparisonType } } : n
+      )
+    );
+  }, [setNodes]);
 
   const handleMinChange = useCallback((nodeId: string, min: number) => {
     setNodes((nds) =>
@@ -736,7 +773,8 @@ export default function App() {
               onChangePulseLength: n.type === 'pulseNode' ? handlePulseLengthChange : undefined,
               onChangeInterval: n.type === 'pulseNode' ? handleIntervalChange : undefined,
               onChangeMin: n.type === 'analogRangeNode' ? handleMinChange : undefined,
-              onChangeMax: n.type === 'analogRangeNode' ? handleMaxChange : undefined,
+              onChangeMax: n.type === 'analogRangeNode' ? handleMaxChange : undefined,              
+              onChangeComparisonType: n.type === 'analogComparerNode' ? handleComparisonTypeChange : undefined,
             }
           }))}
           edges={edges}

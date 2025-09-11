@@ -15,6 +15,12 @@ export const OP_LATCH = 16;
 export const OP_PULSE = 17;
 export const OP_TOGGLE = 18;
 export const OP_ANALOG_RANGE = 19;
+export const OP_ANALOG_COMPARE_GT = 20;
+export const OP_ANALOG_COMPARE_GE = 21;
+export const OP_ANALOG_COMPARE_LT = 22;
+export const OP_ANALOG_COMPARE_LE = 23;
+export const OP_ANALOG_COMPARE_EQ = 24;
+export const OP_ANALOG_COMPARE_NE = 25;
 export const OP_DELAY = 30;
 
 // Types for the logic configuration
@@ -32,6 +38,7 @@ interface NodeData {
   initialState?: number;
   pulseLength?: number;
   interval?: number;
+  comparisonType?: string;
 }
 
 interface Node {
@@ -188,7 +195,7 @@ export function generateBytecode(config: LogicConfig): number[] {
         visited.add(nodeId);
         
         const currentNode = nodeDict[nodeId];
-        if (currentNode.type === 'analogRangeNode') return true;
+        if (currentNode.type === 'analogRangeNode' || currentNode.type === 'analogComparerNode') return true;
         
         for (const neighbor of graph[nodeId]) {
           if (checkConnectedToAnalog(neighbor, visited)) return true;
@@ -310,6 +317,45 @@ export function generateBytecode(config: LogicConfig): number[] {
 
       // Handle different node types
       switch (gateType) {
+        case 'analogComparerNode': {
+          // Find inputs A and B
+          let aVar = -1;
+          let bVar = -1;
+
+          for (const edge of edges) {
+            if (edge.target === nodeId) {
+              const sourceNodeId = edge.source;
+              if (varIndexMap[sourceNodeId] !== undefined) {
+                if (edge.targetHandle === 'a') {
+                  aVar = varIndexMap[sourceNodeId];
+                } else if (edge.targetHandle === 'b') {
+                  bVar = varIndexMap[sourceNodeId];
+                }
+              }
+            }
+          }
+
+          if (aVar >= 0 && bVar >= 0 && varIndexMap[nodeId] !== undefined) {
+            const comparisonType = node.data.comparisonType || '>';
+            let opcode;
+
+            switch (comparisonType) {
+              case '>': opcode = OP_ANALOG_COMPARE_GT; break;
+              case '>=': opcode = OP_ANALOG_COMPARE_GE; break;
+              case '<': opcode = OP_ANALOG_COMPARE_LT; break;
+              case '<=': opcode = OP_ANALOG_COMPARE_LE; break;
+              case '==': opcode = OP_ANALOG_COMPARE_EQ; break;
+              case '!=': opcode = OP_ANALOG_COMPARE_NE; break;
+              default: opcode = OP_ANALOG_COMPARE_GT;
+            }
+
+            instructions.push(opcode);
+            instructions.push(aVar);
+            instructions.push(bVar);
+            instructions.push(varIndexMap[nodeId]);
+          }
+          break;
+        }
         case 'notNode': {
           const inputVars: number[] = [];
           for (const edge of edges) {
