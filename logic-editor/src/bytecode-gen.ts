@@ -482,7 +482,12 @@ export function generateBytecode(config: LogicConfig): number[] {
             }
           }
 
-          if (dataVar >= 0 && clockVar >= 0 && resetVar >= 0 && varIndexMap[nodeId] !== undefined) {
+          // If reset is not connected, use a default variable (0)
+          if (resetVar === -1) {
+            resetVar = 0; // Use variable 0 as default (should be 0)
+          }
+
+          if (dataVar >= 0 && clockVar >= 0 && varIndexMap[nodeId] !== undefined) {
             const outputs = node.data.outputs || 4;
             const initialOutput = node.data.initialOutput || 0;
 
