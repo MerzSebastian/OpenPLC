@@ -15,6 +15,13 @@ export const OP_LATCH = 16;
 export const OP_PULSE = 17;
 export const OP_TOGGLE = 18;
 export const OP_ANALOG_RANGE = 19;
+export const OP_ANALOG_COMPARE_GT = 20;
+export const OP_ANALOG_COMPARE_GE = 21;
+export const OP_ANALOG_COMPARE_LT = 22;
+export const OP_ANALOG_COMPARE_LE = 23;
+export const OP_ANALOG_COMPARE_EQ = 24;
+export const OP_ANALOG_COMPARE_NE = 25;
+export const OP_SHIFT_REGISTER = 26;
 export const OP_DELAY = 30;
 
 // Types for the logic configuration
@@ -32,6 +39,9 @@ interface NodeData {
   initialState?: number;
   pulseLength?: number;
   interval?: number;
+  comparisonType?: string;
+  outputs?: number;
+  initialOutput?: number;
 }
 
 interface Node {
@@ -188,7 +198,7 @@ export function generateBytecode(config: LogicConfig): number[] {
         visited.add(nodeId);
         
         const currentNode = nodeDict[nodeId];
-        if (currentNode.type === 'analogRangeNode') return true;
+        if (currentNode.type === 'analogRangeNode' || currentNode.type === 'analogComparerNode') return true;
         
         for (const neighbor of graph[nodeId]) {
           if (checkConnectedToAnalog(neighbor, visited)) return true;
@@ -345,6 +355,148 @@ export function generateBytecode(config: LogicConfig): number[] {
             for (const inputVar of inputVars) {
               instructions.push(inputVar);
             }
+            instructions.push(varIndexMap[nodeId]);
+          }
+          break;
+        }
+        case 'nandNode': {
+          const inputVars: number[] = [];
+          for (const edge of edges) {
+            if (edge.target === nodeId) {
+              const sourceNodeId = edge.source;
+              if (varIndexMap[sourceNodeId] !== undefined) {
+                inputVars.push(varIndexMap[sourceNodeId]);
+              }
+            }
+          }
+
+          if (inputVars.length >= 2 && varIndexMap[nodeId] !== undefined) {
+            instructions.push(OP_NAND);
+            instructions.push(inputVars.length);
+            for (const inputVar of inputVars) {
+              instructions.push(inputVar);
+            }
+            instructions.push(varIndexMap[nodeId]);
+          }
+          break;
+        }
+        case 'norNode': {
+          const inputVars: number[] = [];
+          for (const edge of edges) {
+            if (edge.target === nodeId) {
+              const sourceNodeId = edge.source;
+              if (varIndexMap[sourceNodeId] !== undefined) {
+                inputVars.push(varIndexMap[sourceNodeId]);
+              }
+            }
+          }
+
+          if (inputVars.length >= 2 && varIndexMap[nodeId] !== undefined) {
+            instructions.push(OP_NOR);
+            instructions.push(inputVars.length);
+            for (const inputVar of inputVars) {
+              instructions.push(inputVar);
+            }
+            instructions.push(varIndexMap[nodeId]);
+          }
+          break;
+        }
+        case 'xorNode': {
+          const inputVars: number[] = [];
+          for (const edge of edges) {
+            if (edge.target === nodeId) {
+              const sourceNodeId = edge.source;
+              if (varIndexMap[sourceNodeId] !== undefined) {
+                inputVars.push(varIndexMap[sourceNodeId]);
+              }
+            }
+          }
+
+          if (inputVars.length >= 2 && varIndexMap[nodeId] !== undefined) {
+            instructions.push(OP_XOR);
+            instructions.push(inputVars.length);
+            for (const inputVar of inputVars) {
+              instructions.push(inputVar);
+            }
+            instructions.push(varIndexMap[nodeId]);
+          }
+          break;
+        }
+        case 'analogComparerNode': {
+          // Find inputs A and B
+          let aVar = -1;
+          let bVar = -1;
+
+          for (const edge of edges) {
+            if (edge.target === nodeId) {
+              const sourceNodeId = edge.source;
+              if (varIndexMap[sourceNodeId] !== undefined) {
+                if (edge.targetHandle === 'a') {
+                  aVar = varIndexMap[sourceNodeId];
+                } else if (edge.targetHandle === 'b') {
+                  bVar = varIndexMap[sourceNodeId];
+                }
+              }
+            }
+          }
+
+          if (aVar >= 0 && bVar >= 0 && varIndexMap[nodeId] !== undefined) {
+            const comparisonType = node.data.comparisonType || '>';
+            let opcode;
+
+            switch (comparisonType) {
+              case '>': opcode = OP_ANALOG_COMPARE_GT; break;
+              case '>=': opcode = OP_ANALOG_COMPARE_GE; break;
+              case '<': opcode = OP_ANALOG_COMPARE_LT; break;
+              case '<=': opcode = OP_ANALOG_COMPARE_LE; break;
+              case '==': opcode = OP_ANALOG_COMPARE_EQ; break;
+              case '!=': opcode = OP_ANALOG_COMPARE_NE; break;
+              default: opcode = OP_ANALOG_COMPARE_GT;
+            }
+
+            instructions.push(opcode);
+            instructions.push(aVar);
+            instructions.push(bVar);
+            instructions.push(varIndexMap[nodeId]);
+          }
+          break;
+        }
+        case 'shiftRegisterNode': {
+          // Find data, clock, and reset inputs
+          let dataVar = -1;
+          let clockVar = -1;
+          let resetVar = -1;
+
+          for (const edge of edges) {
+            if (edge.target === nodeId) {
+              const sourceNodeId = edge.source;
+              if (varIndexMap[sourceNodeId] !== undefined) {
+                if (edge.targetHandle === 'data') {
+                  dataVar = varIndexMap[sourceNodeId];
+                } else if (edge.targetHandle === 'clock') {
+                  clockVar = varIndexMap[sourceNodeId];
+                } else if (edge.targetHandle === 'reset') {
+                  resetVar = varIndexMap[sourceNodeId];
+                }
+              }
+            }
+          }
+
+          // If reset is not connected, use a special value (255) to indicate no reset
+          if (resetVar === -1) {
+            resetVar = 255; // Special value meaning "no reset connected"
+          }
+
+          if (dataVar >= 0 && clockVar >= 0 && varIndexMap[nodeId] !== undefined) {
+            const outputs = node.data.outputs || 4;
+            const initialState = node.data.initialState || 0;
+
+            instructions.push(OP_SHIFT_REGISTER);
+            instructions.push(dataVar);
+            instructions.push(clockVar);
+            instructions.push(resetVar); // This can be 255 now
+            instructions.push(outputs);
+            instructions.push(initialState);
             instructions.push(varIndexMap[nodeId]);
           }
           break;

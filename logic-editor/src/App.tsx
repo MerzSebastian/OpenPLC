@@ -47,10 +47,15 @@ const blockTypes = [
   { type: 'andNode', label: 'AND', color: 'bg-blue-500' },
   // { type: 'orNode', label: 'OR', color: 'bg-purple-500' },
   { type: 'notNode', label: 'NOT', color: 'bg-yellow-500' },
+  { type: 'nandNode', label: 'NAND', color: 'bg-blue-400' },
+  { type: 'norNode', label: 'NOR', color: 'bg-purple-400' },
+  { type: 'xorNode', label: 'XOR', color: 'bg-yellow-400' },
   { type: 'latchNode', label: 'LATCH', color: 'bg-orange-500' },
   { type: 'pulseNode', label: 'PULSE (beta)', color: 'bg-cyan-500' },
   { type: 'toggleNode', label: 'TOGGLE', color: 'bg-pink-500' },
   { type: 'analogRangeNode', label: 'ANALOG RANGE', color: 'bg-teal-500' },
+  { type: 'analogComparerNode', label: 'ANALOG COMPARER', color: 'bg-indigo-500' },
+  { type: 'shiftRegisterNode', label: 'SHIFT REGISTER', color: 'bg-purple-600' },
 ];
 
 // === Node Definitions ===
@@ -158,6 +163,211 @@ function PulseNode({ data, id }: any) {
           />
         </div>
       </div>
+    </div>
+  );
+}
+
+function NandNode({ data, id }: any) {
+  const { inputs = 2 } = data;
+  const handleSpacing = 15;
+  const baseHeight = 50;
+  const dynamicHeight = baseHeight + (inputs - 3) * handleSpacing;
+
+  return (
+    <div
+      className={`${nodeBaseClasses} w-28 bg-blue-400 border-2 border-blue-600`}
+      style={{ minHeight: dynamicHeight }}
+    >
+      <div className={titleClasses}>NAND</div>
+      {Array.from({ length: inputs }).map((_, idx) => (
+        <Handle
+          key={idx}
+          type="target"
+          position={Position.Left}
+          id={`in${idx}`}
+          className={handleClasses}
+          style={{ top: 10 + idx * 15 }}
+        />
+      ))}
+      <Handle type="source" position={Position.Right} id="out" className={handleClasses} />
+      <div className="mt-1 text-xs flex">
+        Inputs:
+        <input
+          type="number"
+          min={2}
+          max={8}
+          value={inputs}
+          onChange={(e) => data.onChangeInputs(id, parseInt(e.target.value))}
+          className={`${inputClasses} w-8 ml-2`}
+        />
+      </div>
+    </div>
+  );
+}
+
+function NorNode({ data, id }: any) {
+  const { inputs = 2 } = data;
+  const handleSpacing = 15;
+  const baseHeight = 50;
+  const dynamicHeight = baseHeight + (inputs - 3) * handleSpacing;
+
+  return (
+    <div
+      className={`${nodeBaseClasses} w-28 bg-purple-400 border-2 border-purple-600`}
+      style={{ minHeight: dynamicHeight }}
+    >
+      <div className={titleClasses}>NOR</div>
+      {Array.from({ length: inputs }).map((_, idx) => (
+        <Handle
+          key={idx}
+          type="target"
+          position={Position.Left}
+          id={`in${idx}`}
+          className={handleClasses}
+          style={{ top: 10 + idx * 15 }}
+        />
+      ))}
+      <Handle type="source" position={Position.Right} id="out" className={handleClasses} />
+      <div className="mt-1 text-xs flex">
+        Inputs:
+        <input
+          type="number"
+          min={2}
+          max={8}
+          value={inputs}
+          onChange={(e) => data.onChangeInputs(id, parseInt(e.target.value))}
+          className={`${inputClasses} w-8 ml-2`}
+        />
+      </div>
+    </div>
+  );
+}
+
+function XorNode({ data, id }: any) {
+  const { inputs = 2 } = data;
+  const handleSpacing = 15;
+  const baseHeight = 50;
+  const dynamicHeight = baseHeight + (inputs - 3) * handleSpacing;
+
+  return (
+    <div
+      className={`${nodeBaseClasses} w-28 bg-yellow-400 border-2 border-yellow-600`}
+      style={{ minHeight: dynamicHeight }}
+    >
+      <div className={titleClasses}>XOR</div>
+      {Array.from({ length: inputs }).map((_, idx) => (
+        <Handle
+          key={idx}
+          type="target"
+          position={Position.Left}
+          id={`in${idx}`}
+          className={handleClasses}
+          style={{ top: 10 + idx * 15 }}
+        />
+      ))}
+      <Handle type="source" position={Position.Right} id="out" className={handleClasses} />
+      <div className="mt-1 text-xs flex">
+        Inputs:
+        <input
+          type="number"
+          min={2}
+          max={8}
+          value={inputs}
+          onChange={(e) => data.onChangeInputs(id, parseInt(e.target.value))}
+          className={`${inputClasses} w-8 ml-2`}
+        />
+      </div>
+    </div>
+  );
+}
+
+function AnalogComparerNode({ data, id }: any) {
+  return (
+    <div className={`${nodeBaseClasses} w-40 bg-indigo-500 border-2 border-indigo-700`}>
+      <div className={titleClasses}>ANALOG COMPARER</div>
+      <Handle type="target" position={Position.Left} id="a" className={handleClasses} style={{ top: '35%' }} />
+      <Handle type="target" position={Position.Left} id="b" className={handleClasses} style={{ top: '55%' }} />
+      <div className='absolute left-1 top-[35%] -mt-3 text-sm'>A</div>
+      <div className='absolute left-1 top-[55%] -mt-3 text-sm'>B</div>
+      
+      <select
+        value={data.comparisonType || '>'}
+        onChange={(e) => data.onChangeComparisonType(id, e.target.value)}
+        className={`${inputClasses} mt-6 w-full`}
+      >
+        <option value=">">A &gt; B</option>
+        <option value=">=">A &gt;= B</option>
+        <option value="<">A &lt; B</option>
+        <option value="<=">A &lt;= B</option>
+        <option value="==">A == B</option>
+        <option value="!=">A != B</option>
+      </select>
+      
+      <Handle type="source" position={Position.Right} id="out" className={handleClasses} />
+    </div>
+  );
+}
+
+function ShiftRegisterNode({ data, id }: any) {
+  const outputs = data.outputs || 4;
+  const handleSpacing = 15;
+  const baseHeight = 80;
+  const dynamicHeight = baseHeight + (outputs - 4) * handleSpacing;
+  
+  return (
+    <div 
+      className={`${nodeBaseClasses} w-40 bg-purple-600 border-2 border-purple-800`}
+      style={{ minHeight: dynamicHeight }}
+    >
+      <div className={titleClasses}>SHIFT REGISTER</div>
+      
+      {/* Input handles */}
+      <Handle type="target" position={Position.Left} id="data" className={handleClasses} style={{ top: '30%' }} />
+      <Handle type="target" position={Position.Left} id="clock" className={handleClasses} style={{ top: '45%' }} />
+      <Handle type="target" position={Position.Left} id="reset" className={handleClasses} style={{ top: '60%' }} />
+      
+      <div className='absolute left-1 top-[30%] -mt-3 text-sm'>data</div>
+      <div className='absolute left-1 top-[45%] -mt-3 text-sm'>clock</div>
+      <div className='absolute left-1 top-[60%] -mt-3 text-sm'>reset</div>
+      
+      {/* Configuration */}
+      <div className="mt-8 text-xs space-y-1">
+        <div className="flex items-center whitespace-nowrap">
+          Outputs:
+          <input
+            type="number"
+            min="2"
+            max="8"
+            value={outputs}
+            onChange={(e) => data.onChangeOutputs(id, parseInt(e.target.value))}
+            className={`${inputClasses} ml-1 w-10`}
+          />
+        </div>
+        <div className="flex items-center whitespace-nowrap">
+          Initial:
+          <select
+            value={data.initialState || 0}
+            onChange={(e) => data.onChangeInitialState(id, parseInt(e.target.value))}
+            className={`${inputClasses} ml-1 w-14`}
+          >
+            {Array.from({ length: outputs }).map((_, i) => (
+              <option key={i} value={i}>Q{i}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+      
+      {/* Output handles */}
+      {Array.from({ length: outputs }).map((_, idx) => (
+        <Handle
+          key={idx}
+          type="source"
+          position={Position.Right}
+          id={`q${idx}`}
+          className={handleClasses}
+          style={{ top: 30 + idx * 15 }}
+        />
+      ))}
     </div>
   );
 }
@@ -343,11 +553,40 @@ export default function App() {
     andNode: AndNode,
     orNode: OrNode,
     notNode: NotNode,
+    nandNode: NandNode,
+    norNode: NorNode,
+    xorNode: XorNode,
     latchNode: LatchNode,
     pulseNode: PulseNode,
     toggleNode: ToggleNode,
     analogRangeNode: AnalogRangeNode,
+    analogComparerNode: AnalogComparerNode,
+    shiftRegisterNode: ShiftRegisterNode,
   }), []);
+
+  const handleComparisonTypeChange = useCallback((nodeId: string, comparisonType: string) => {
+    setNodes((nds) =>
+      nds.map((n) =>
+        n.id === nodeId ? { ...n, data: { ...n.data, comparisonType } } : n
+      )
+    );
+  }, [setNodes]);
+
+  const handleOutputsChange = useCallback((nodeId: string, outputs: number) => {
+    setNodes((nds) =>
+      nds.map((n) =>
+        n.id === nodeId ? { ...n, data: { ...n.data, outputs } } : n
+      )
+    );
+  }, [setNodes]);
+
+  const handleInitialOutputChange = useCallback((nodeId: string, initialOutput: number) => {
+    setNodes((nds) =>
+      nds.map((n) =>
+        n.id === nodeId ? { ...n, data: { ...n.data, initialOutput } } : n
+      )
+    );
+  }, [setNodes]);
 
   const handleMinChange = useCallback((nodeId: string, min: number) => {
     setNodes((nds) =>
@@ -525,7 +764,7 @@ export default function App() {
   };
 
   const getArduinoInoFile = async () => {
-    const githubUrl = 'https://raw.githubusercontent.com/MerzSebastian/OpenPLC/refs/heads/main/arduino/arduino.ino';
+    const githubUrl = 'https://raw.githubusercontent.com/MerzSebastian/OpenPLC/refs/heads/feature/add-nodes/arduino/arduino.ino';
     const response = await fetch(githubUrl);
     return await response.text();
   }
@@ -731,12 +970,15 @@ export default function App() {
               ...n.data,
               selectedBoard,
               onChangePin: handlePinChange,
-              onChangeInputs: n.type === 'andNode' || n.type === 'orNode' ? handleInputsChange : undefined,
+              onChangeInputs: n.type === 'andNode' || n.type === 'orNode' || n.type === 'nandNode' || n.type === 'norNode' || n.type === 'xorNode' ? handleInputsChange : undefined,
               onChangeInitialState: n.type === 'latchNode' || n.type === 'toggleNode' ? handleInitialStateChange : undefined,
               onChangePulseLength: n.type === 'pulseNode' ? handlePulseLengthChange : undefined,
               onChangeInterval: n.type === 'pulseNode' ? handleIntervalChange : undefined,
               onChangeMin: n.type === 'analogRangeNode' ? handleMinChange : undefined,
               onChangeMax: n.type === 'analogRangeNode' ? handleMaxChange : undefined,
+              onChangeComparisonType: n.type === 'analogComparerNode' ? handleComparisonTypeChange : undefined,
+              onChangeOutputs: n.type === 'shiftRegisterNode' ? handleOutputsChange : undefined,
+              onChangeInitialOutput: n.type === 'shiftRegisterNode' ? handleInitialOutputChange : undefined,
             }
           }))}
           edges={edges}

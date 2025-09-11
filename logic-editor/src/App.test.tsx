@@ -727,3 +727,114 @@ test('larger project without OR. connecting two buttons to same input', () => {
 
   expect(bytecodeToString(generateBytecode(test as any))).toEqual(expectedBytecode);
 });
+
+test('analogComparerNode test', () => {
+  const test = {
+  "nodes": [
+    {
+      "id": "dndnode_0",
+      "type": "analogComparerNode",
+      "position": {
+        "x": 355.08583015996766,
+        "y": 267.65848888782415
+      },
+      "data": {
+        "label": "analogComparerNode",
+        "inputs": 2,
+        "selectedBoard": "arduino_nano"
+      },
+      "width": 160,
+      "height": 103
+    },
+    {
+      "id": "dndnode_1",
+      "type": "inputNode",
+      "position": {
+        "x": 177.975220378801,
+        "y": 253.12988417921287
+      },
+      "data": {
+        "label": "inputNode",
+        "inputs": 2,
+        "selectedBoard": "arduino_nano",
+        "pin": "14"
+      },
+      "width": 97,
+      "height": 59,
+      "selected": false,
+      "dragging": false,
+      "positionAbsolute": {
+        "x": 177.975220378801,
+        "y": 253.12988417921287
+      }
+    },
+    {
+      "id": "dndnode_2",
+      "type": "inputNode",
+      "position": {
+        "x": 173.82419046205496,
+        "y": 319.5463628471503
+      },
+      "data": {
+        "label": "inputNode",
+        "inputs": 2,
+        "selectedBoard": "arduino_nano",
+        "pin": "15"
+      },
+      "width": 97,
+      "height": 59,
+      "selected": false,
+      "dragging": false,
+      "positionAbsolute": {
+        "x": 173.82419046205496,
+        "y": 319.5463628471503
+      }
+    },
+    {
+      "id": "dndnode_3",
+      "type": "outputNode",
+      "position": {
+        "x": 569.5557091918491,
+        "y": 304.3259198190813
+      },
+      "data": {
+        "label": "outputNode",
+        "inputs": 2,
+        "selectedBoard": "arduino_nano",
+        "pin": "13"
+      },
+      "width": 97,
+      "height": 59,
+      "selected": false,
+      "dragging": false
+    }
+  ],
+  "edges": [
+    {
+      "source": "dndnode_1",
+      "sourceHandle": "out",
+      "target": "dndnode_0",
+      "targetHandle": "a",
+      "id": "reactflow__edge-dndnode_1out-dndnode_0a"
+    },
+    {
+      "source": "dndnode_2",
+      "sourceHandle": "out",
+      "target": "dndnode_0",
+      "targetHandle": "b",
+      "id": "reactflow__edge-dndnode_2out-dndnode_0b"
+    },
+    {
+      "source": "dndnode_0",
+      "sourceHandle": "out",
+      "target": "dndnode_3",
+      "targetHandle": "in",
+      "id": "reactflow__edge-dndnode_0out-dndnode_3in"
+    }
+  ],
+  "board": "arduino_nano"
+};
+  const expectedBytecode = "1,14,1,15,2,13,5,14,0,5,15,1,20,0,1,2,4,13,2";
+
+  expect(bytecodeToString(generateBytecode(test as any))).toEqual(expectedBytecode);
+});
