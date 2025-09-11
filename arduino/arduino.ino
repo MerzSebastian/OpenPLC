@@ -449,56 +449,7 @@ void executeInstructions() {
         variables[outputVar] = (abs(variables[aVar] - variables[bVar]) >= 5) ? 1 : 0;
         break;
       }
-      case OP_SHIFT_REGISTER: {
-        byte dataVar = instructions[pc++];
-        byte clockVar = instructions[pc++];
-        byte resetVar = instructions[pc++];
-        byte numOutputs = instructions[pc++];
-        byte initialState = instructions[pc++];
-        byte baseOutputVar = instructions[pc++];
 
-        static bool shiftRegisterInitialized[MAX_VARIABLES] = {false};
-        static uint8_t shiftRegisterState[MAX_VARIABLES] = {0};
-        static bool prevClockState[MAX_VARIABLES] = {false};
-
-        // Initialize on first run
-        if (!shiftRegisterInitialized[baseOutputVar]) {
-          // Set only the initial output bit high, others low
-          shiftRegisterState[baseOutputVar] = (1 << initialState);
-          shiftRegisterInitialized[baseOutputVar] = true;
-        }
-
-        // Reset logic - only if reset is connected (not 255) and reset is HIGH
-        if (resetVar != 255 && variables[resetVar] == HIGH) {
-          // Reset to initial state (only the initial output bit high)
-          shiftRegisterState[baseOutputVar] = (1 << initialState);
-        }
-
-        // Clock rising edge detection
-        bool currentClockState = variables[clockVar];
-        if (currentClockState && !prevClockState[baseOutputVar]) {
-          // On rising edge of clock, shift the register
-          if (variables[dataVar]) {
-            // Shift left and set LSB to 1
-            shiftRegisterState[baseOutputVar] = (shiftRegisterState[baseOutputVar] << 1) | 0x01;
-          } else {
-            // Shift left and set LSB to 0
-            shiftRegisterState[baseOutputVar] = (shiftRegisterState[baseOutputVar] << 1) & 0xFE;
-          }
-
-          // Handle wrap-around for the number of outputs
-          if (shiftRegisterState[baseOutputVar] >= (1 << numOutputs)) {
-            shiftRegisterState[baseOutputVar] = 1; // Reset to first output
-          }
-        }
-        prevClockState[baseOutputVar] = currentClockState;
-
-        // Set output variables (one for each output)
-        for (byte i = 0; i < numOutputs; i++) {
-          variables[baseOutputVar + i] = (shiftRegisterState[baseOutputVar] >> i) & 0x01;
-        }
-        break;
-      }
     }
   }
 }
