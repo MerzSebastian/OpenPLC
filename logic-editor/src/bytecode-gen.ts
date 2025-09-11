@@ -198,7 +198,7 @@ export function generateBytecode(config: LogicConfig): number[] {
         visited.add(nodeId);
         
         const currentNode = nodeDict[nodeId];
-        if (currentNode.type === 'analogRangeNode') return true;
+        if (currentNode.type === 'analogRangeNode' || currentNode.type === 'analogComparerNode') return true;
         
         for (const neighbor of graph[nodeId]) {
           if (checkConnectedToAnalog(neighbor, visited)) return true;
