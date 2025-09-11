@@ -489,14 +489,14 @@ export function generateBytecode(config: LogicConfig): number[] {
 
           if (dataVar >= 0 && clockVar >= 0 && varIndexMap[nodeId] !== undefined) {
             const outputs = node.data.outputs || 4;
-            const initialOutput = node.data.initialOutput || 0;
+            const initialState = node.data.initialState || 0;
 
             instructions.push(OP_SHIFT_REGISTER);
             instructions.push(dataVar);
             instructions.push(clockVar);
             instructions.push(resetVar); // This can be 255 now
             instructions.push(outputs);
-            instructions.push(initialOutput);
+            instructions.push(initialState);
             instructions.push(varIndexMap[nodeId]);
           }
           break;

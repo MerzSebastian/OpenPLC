@@ -453,41 +453,42 @@ void executeInstructions() {
       case OP_SHIFT_REGISTER: {
         byte dataVar = instructions[pc++];
         byte clockVar = instructions[pc++];
-        byte resetVar = instructions[pc++]; // This can be 255 now
+        byte resetVar = instructions[pc++];
         byte numOutputs = instructions[pc++];
-        byte initialOutput = instructions[pc++];
+        byte initialState = instructions[pc++];
         byte baseOutputVar = instructions[pc++];
         
         static bool shiftRegisterInitialized[MAX_VARIABLES] = {false};
-        static unsigned long shiftRegisterState[MAX_VARIABLES] = {0};
+        static uint8_t shiftRegisterState[MAX_VARIABLES] = {0};
         static bool prevClockState[MAX_VARIABLES] = {false};
         
         // Initialize on first run
         if (!shiftRegisterInitialized[baseOutputVar]) {
-          shiftRegisterState[baseOutputVar] = 1 << initialOutput;
+          // Set only the initial output bit high, others low
+          shiftRegisterState[baseOutputVar] = (1 << initialState);
           shiftRegisterInitialized[baseOutputVar] = true;
         }
         
-        // Reset logic - only apply if reset is connected (not 255)
-        if (resetVar != 255 && variables[resetVar]) {
-          shiftRegisterState[baseOutputVar] = 1 << initialOutput;
+        // Reset logic - only if reset is connected (not 255) and reset is HIGH
+        if (resetVar != 255 && variables[resetVar] == HIGH) {
+          // Reset to initial state (only the initial output bit high)
+          shiftRegisterState[baseOutputVar] = (1 << initialState);
         }
         
         // Clock rising edge detection
         bool currentClockState = variables[clockVar];
         if (currentClockState && !prevClockState[baseOutputVar]) {
-          // On rising edge of clock, shift the data
+          // On rising edge of clock, shift the register
           if (variables[dataVar]) {
             // Shift left and set LSB to 1
             shiftRegisterState[baseOutputVar] = (shiftRegisterState[baseOutputVar] << 1) | 0x01;
           } else {
             // Shift left and set LSB to 0
-            shiftRegisterState[baseOutputVar] = (shiftRegisterState[baseOutputVar] << 1) & 0xFFFFFFFE;
+            shiftRegisterState[baseOutputVar] = (shiftRegisterState[baseOutputVar] << 1) & 0xFE;
           }
           
           // Handle wrap-around for the number of outputs
-          unsigned long maxState = 1 << numOutputs;
-          if (shiftRegisterState[baseOutputVar] >= maxState) {
+          if (shiftRegisterState[baseOutputVar] >= (1 << numOutputs)) {
             shiftRegisterState[baseOutputVar] = 1; // Reset to first output
           }
         }
@@ -497,7 +498,6 @@ void executeInstructions() {
         for (byte i = 0; i < numOutputs; i++) {
           variables[baseOutputVar + i] = (shiftRegisterState[baseOutputVar] >> i) & 0x01;
         }
-        
         break;
       }
     

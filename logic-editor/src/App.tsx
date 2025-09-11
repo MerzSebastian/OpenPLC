@@ -346,8 +346,8 @@ function ShiftRegisterNode({ data, id }: any) {
         <div className="flex items-center whitespace-nowrap">
           Initial:
           <select
-            value={data.initialOutput || 0}
-            onChange={(e) => data.onChangeInitialOutput(id, parseInt(e.target.value))}
+            value={data.initialState || 0}
+            onChange={(e) => data.onChangeInitialState(id, parseInt(e.target.value))}
             className={`${inputClasses} ml-1 w-14`}
           >
             {Array.from({ length: outputs }).map((_, i) => (
