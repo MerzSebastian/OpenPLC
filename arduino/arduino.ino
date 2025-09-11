@@ -453,7 +453,7 @@ void executeInstructions() {
       case OP_SHIFT_REGISTER: {
         byte dataVar = instructions[pc++];
         byte clockVar = instructions[pc++];
-        byte resetVar = instructions[pc++];
+        byte resetVar = instructions[pc++]; // This can be 255 now
         byte numOutputs = instructions[pc++];
         byte initialOutput = instructions[pc++];
         byte baseOutputVar = instructions[pc++];
@@ -468,8 +468,8 @@ void executeInstructions() {
           shiftRegisterInitialized[baseOutputVar] = true;
         }
         
-        // Reset logic - active high
-        if (variables[resetVar]) {
+        // Reset logic - only apply if reset is connected (not 255)
+        if (resetVar != 255 && variables[resetVar]) {
           shiftRegisterState[baseOutputVar] = 1 << initialOutput;
         }
         
@@ -497,8 +497,10 @@ void executeInstructions() {
         for (byte i = 0; i < numOutputs; i++) {
           variables[baseOutputVar + i] = (shiftRegisterState[baseOutputVar] >> i) & 0x01;
         }
+        
         break;
       }
+    
     }
   }
 }

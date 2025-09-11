@@ -482,9 +482,9 @@ export function generateBytecode(config: LogicConfig): number[] {
             }
           }
 
-          // If reset is not connected, use a default variable (0)
+          // If reset is not connected, use a special value (255) to indicate no reset
           if (resetVar === -1) {
-            resetVar = 0; // Use variable 0 as default (should be 0)
+            resetVar = 255; // Special value meaning "no reset connected"
           }
 
           if (dataVar >= 0 && clockVar >= 0 && varIndexMap[nodeId] !== undefined) {
@@ -494,10 +494,10 @@ export function generateBytecode(config: LogicConfig): number[] {
             instructions.push(OP_SHIFT_REGISTER);
             instructions.push(dataVar);
             instructions.push(clockVar);
-            instructions.push(resetVar);
+            instructions.push(resetVar); // This can be 255 now
             instructions.push(outputs);
             instructions.push(initialOutput);
-            instructions.push(varIndexMap[nodeId]); // Base variable index for outputs
+            instructions.push(varIndexMap[nodeId]);
           }
           break;
         }
