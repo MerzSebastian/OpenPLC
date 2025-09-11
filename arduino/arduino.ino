@@ -482,11 +482,12 @@ void executeInstructions() {
             shiftRegisterState[baseOutputVar] = (shiftRegisterState[baseOutputVar] << 1) | 0x01;
           } else {
             // Shift left and set LSB to 0
-            shiftRegisterState[baseOutputVar] = (shiftRegisterState[baseOutputVar] << 1) & ~0x01;
+            shiftRegisterState[baseOutputVar] = (shiftRegisterState[baseOutputVar] << 1) & 0xFFFFFFFE;
           }
           
           // Handle wrap-around for the number of outputs
-          if (shiftRegisterState[baseOutputVar] >= (1 << numOutputs)) {
+          unsigned long maxState = 1 << numOutputs;
+          if (shiftRegisterState[baseOutputVar] >= maxState) {
             shiftRegisterState[baseOutputVar] = 1; // Reset to first output
           }
         }
